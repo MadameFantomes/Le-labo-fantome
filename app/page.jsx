@@ -7,18 +7,19 @@ const BOORACLE_URL = "https://booracle.example.com"; // ← à remplacer quand t
 
 // Effets sonores (dépose tes mp3/ogg dans /public)
 const DOOR_CREAK_URL = "/door-creak.mp3"; // grincement de porte
-const HALL_CHIME_URL = "/hall-chimes.mp3";  // carillon d'accueil (lecture unique)
-const BACKGROUND_MUSIC_URL = "/bg-music.mp3";   // musique de fond après le carillon
+const HALL_CHIME_URL = "/hall-chimes.mp3"; // carillon d'accueil (lecture unique)
+const BACKGROUND_MUSIC_URL = "/bg-music.mp3"; // musique de fond après le carillon (optionnelle)
 
 export default function Site() {
   const [entered, setEntered] = useState(false);
   const [room, setRoom] = useState(null); // "labo" | "etude" | "ghostbox" | null
   const [muted, setMuted] = useState(false);
 
-  // Précharger les sons côté client
+  // Sons
   const [creak, setCreak] = useState(null);
   const [chime, setChime] = useState(null);
   const [bgm, setBgm] = useState(null);
+  const [chimeEnded, setChimeEnded] = useState(false);
 
   React.useEffect(() => {
     if (typeof window === "undefined") return;
@@ -27,21 +28,28 @@ export default function Site() {
     const b = new Audio(BACKGROUND_MUSIC_URL);
     c.volume = 0.6; // grincement
     h.volume = 0.25; // carillon doux
-    h.loop = false;  // lecture unique
-    b.volume = 0.2;  // musique de fond discrète
+    h.loop = false; // une seule fois
+    b.volume = 0.20; // musique de fond discrète
     b.loop = true;
-    // Quand le carillon se termine, lancer la musique de fond si pas muet
-    h.addEventListener("ended", () => {
-      if (!document.hidden) {
-        try { !muted && b.play(); } catch {}
+
+    const onEnded = () => {
+      setChimeEnded(true);
+      if (!muted) {
+        try { b.play(); } catch {}
       }
-    });
+    };
+    h.addEventListener("ended", onEnded);
+
     setCreak(c);
     setChime(h);
     setBgm(b);
 
-    return () => { try { h.pause(); b.pause(); } catch {} };
-  }, []);
+    return () => {
+      try { h.removeEventListener("ended", onEnded); } catch {}
+      try { h.pause(); } catch {}
+      try { b.pause(); } catch {}
+    };
+  }, [muted]);
 
   const handleEnter = () => {
     setEntered(true);
@@ -50,27 +58,37 @@ export default function Site() {
     }
   };
 
-  // Lancer/arrêter le carillon dans le hall
+  // Lecture du carillon (une fois) puis musique de fond
   React.useEffect(() => {
     if (!entered || !chime) return;
-    if (!muted) {
-      try { chime.currentTime = 0; chime.play(); } catch {}
-    } else {
+    if (muted) {
       try { chime.pause(); } catch {}
       try { bgm && bgm.pause(); } catch {}
+      return;
     }
-    return () => { try { chime.pause(); } catch {} };
-  }, [entered, chime, muted, bgm]);
+    // Si le carillon n'a pas encore fini, on le joue
+    if (!chimeEnded) {
+      try { chime.currentTime = 0; chime.play(); } catch {}
+    } else {
+      // Sinon, on lance/relance la musique de fond (si présente)
+      if (bgm) {
+        try { bgm.currentTime = 0; bgm.play(); } catch {}
+      }
+    }
+  }, [entered, muted, chime, bgm, chimeEnded]);
 
   const toggleMute = () => {
     setMuted((m) => {
       const next = !m;
       try {
-        if (next) { // on coupe le son
+        if (next) { // couper
           chime && chime.pause();
           bgm && bgm.pause();
-        } else { // on réactive : si le carillon est déjà passé, relancer la musique de fond
-          if (entered && bgm) bgm.play().catch(() => {});
+        } else { // réactiver
+          if (entered) {
+            if (chimeEnded && bgm) bgm.play().catch(() => {});
+            else if (chime) chime.play().catch(() => {});
+          }
         }
       } catch {}
       return next;
@@ -115,9 +133,7 @@ function Landing({ onEnter }) {
           onClick={handleClick}
           role="button"
           tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") handleClick();
-          }}
+          onKeyDown={(e) => { if (e.key === "Enter") handleClick(); }}
           aria-label="Entrer dans le Labo"
         >
           <div style={styles.doorFrame} />
@@ -137,11 +153,11 @@ function Landing({ onEnter }) {
             <div style={styles.doorPlaque}>LE LABO FANTÔME — ÉCOLE</div>
 
             {/* Panneaux bois */}
-            <div style={styles.panelRow}>
+            <div style={{ ...styles.panelRow, top: 90 }}>
               <div style={styles.panel} />
               <div style={styles.panel} />
             </div>
-            <div style={styles.panelRow}>
+            <div style={{ ...styles.panelRow, bottom: 80 }}>
               <div style={styles.panel} />
               <div style={styles.panel} />
             </div>
@@ -161,18 +177,12 @@ function Landing({ onEnter }) {
 }
 
 // ——————————————————————————————————————————————
-// Hall — Choix des pièces
+// Hall — Choix des pièces (affichage exclusif)
 function Hall({ room, setRoom }) {
-  // Affiche exclusivement la pièce choisie pour éviter toute superposition
-  if (room === "labo") {
-    return <RoomLabo onBack={() => setRoom(null)} />;
-  }
-  if (room === "etude") {
-    return <RoomEtude onBack={() => setRoom(null)} />;
-  }
-  if (room === "ghostbox") {
-    return <RoomGhostBox onBack={() => setRoom(null)} />;
-  }
+  // Affiche uniquement la pièce choisie (évite toute superposition)
+  if (room === "labo") return <RoomLabo onBack={() => setRoom(null)} />;
+  if (room === "etude") return <RoomEtude onBack={() => setRoom(null)} />;
+  if (room === "ghostbox") return <RoomGhostBox onBack={() => setRoom(null)} />;
 
   // Sinon, afficher le Hall seul
   return (
@@ -187,30 +197,6 @@ function Hall({ room, setRoom }) {
         <MiniDoor title="Salle d'étude" subtitle="Bibliothèque, Livret, Booracle" icon="📚" onClick={() => setRoom("etude")} />
         <MiniDoor title="GhostBox" subtitle="Console en ligne" icon="📻" onClick={() => setRoom("ghostbox")} />
       </div>
-    </section>
-  );
-}
-
-) {
-  return (
-    <section style={{ ...styles.hall, ...bg("/lab.jpg") }} aria-label="Hall — Choisir une pièce">
-      <div style={styles.bgOverlay} />
-      <header style={styles.hallHeader}>
-        <h2 style={styles.hallTitle}>Hall du Labo</h2>
-        <p style={styles.hallSub}>Choisis une porte pour continuer</p>
-      </header>
-
-      {!room && (
-        <div style={styles.doorsGrid}>
-          <MiniDoor title="Le Labo" subtitle="TCI & enregistrements" icon="🎙️" onClick={() => setRoom("labo")} />
-          <MiniDoor title="Salle d'étude" subtitle="Bibliothèque, Livret, Booracle" icon="📚" onClick={() => setRoom("etude")} />
-          <MiniDoor title="GhostBox" subtitle="Console en ligne" icon="📻" onClick={() => setRoom("ghostbox")} />
-        </div>
-      )}
-
-      {room === "labo" && <RoomLabo onBack={() => setRoom(null)} />}
-      {room === "etude" && <RoomEtude onBack={() => setRoom(null)} />}
-      {room === "ghostbox" && <RoomGhostBox onBack={() => setRoom(null)} />}
     </section>
   );
 }
@@ -362,7 +348,7 @@ function GlobalStyles() {
   return (
     <style>{`
       @keyframes twinkle { 0%,100% { opacity:.3 } 50% { opacity:.8 } }
-      .door:hover { filter: brightness(1.08); }
+      .door:hover { filter: brightness(1.05); }
       .beam { animation: glow 2.6s ease-in-out infinite; }
       @keyframes glow { 0%,100% { opacity: .15 } 50% { opacity: .35 } }
       @keyframes lampFlicker { 0%,19%,21%,23%,25%,54%,56%,100% { opacity: .9; filter: drop-shadow(0 0 18px rgba(255,242,200,.55)); } 20%,24%,55% { opacity: .6; filter: drop-shadow(0 0 6px rgba(255,242,200,.25)); } }
@@ -405,8 +391,7 @@ const styles = {
     position: "absolute",
     inset: 0,
     borderRadius: 14,
-    backgroundImage: `url(/door.jpg),
-      linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.45))`,
+    backgroundImage: `url(/door.jpg), linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.45))`,
     backgroundSize: "cover, 100% 100%",
     backgroundPosition: "center",
     backgroundBlendMode: "multiply",
@@ -486,22 +471,10 @@ const styles = {
     width: 22,
     background: "linear-gradient(90deg, rgba(255,238,170,.55), rgba(255,238,170,0))",
     filter: "blur(6px)",
-    opacity: .8,
+    opacity: 0.8,
     pointerEvents: "none",
   },
-
-  // petite lampe vacillante dans la salle d'étude
-  lamp: {
-    position: "absolute",
-    top: 40,
-    right: 60,
-    width: 18,
-    height: 18,
-    borderRadius: 999,
-    background: "radial-gradient(circle at 50% 50%, #ffe9b0, #e9b76a 60%, rgba(0,0,0,0) 70%)",
-    animation: "lampFlicker 2.6s infinite",
-    zIndex: 1,
-  },
+  doorShadow: { position: "absolute", inset: -12, borderRadius: 18, background: "rgba(255,255,255,0.05)", filter: "blur(6px)" },
 
   app: { minHeight: "100vh", background: "#0b0f1a", color: "#f6f6f6", position: "relative", overflowX: "hidden" },
   fullscreen: { minHeight: "100vh", display: "grid", placeItems: "center", position: "relative", padding: "48px 16px" },
@@ -512,26 +485,6 @@ const styles = {
 
   // Overlay doux au-dessus des fonds photos
   bgOverlay: { position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(11,15,26,.4), rgba(11,15,26,.65))", backdropFilter: "blur(1px)" },
-
-  // Porte
-  doorWrap: { position: "relative", width: 260, height: 420, marginTop: 12, cursor: "pointer", zIndex: 1 },
-  doorShadow: { position: "absolute", inset: -12, borderRadius: 18, background: "rgba(255,255,255,0.05)", filter: "blur(6px)" },
-  door: {
-    position: "absolute",
-    inset: 0,
-    borderRadius: 14,
-    background: `linear-gradient(180deg, #3b2d1f 0%, #2e2419 40%, #251d14 100%),
-      repeating-linear-gradient(90deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 24px)`,
-    border: "1px solid rgba(255,255,255,0.18)",
-    boxShadow: "inset 0 0 0 1px rgba(0,0,0,.8), 0 30px 80px rgba(0,0,0,.6)",
-    display: "grid",
-    placeItems: "center",
-    transformOrigin: "left center",
-    transition: "transform .8s cubic-bezier(.2,.7,.1,1)",
-  },
-  doorKnob: { position: "absolute", right: 24, top: "50%", width: 16, height: 16, borderRadius: 999, background: "radial-gradient(circle at 30% 30%, #e0c16d, #8a6b2a)", boxShadow: "0 0 6px rgba(255,220,120,.6)" },
-  doorSign: { position: "absolute", top: 18, left: "50%", transform: "translateX(-50%)", padding: "4px 10px", borderRadius: 8, fontFamily: "serif", letterSpacing: 2, fontSize: 14, background: "rgba(0,0,0,.35)", border: "1px solid rgba(255,255,255,.25)" },
-  lightBeam: { position: "absolute", left: 0, top: 0, bottom: 0, width: 24, background: "linear-gradient(90deg, rgba(255,238,170,.45), rgba(255,238,170,0))", filter: "blur(4px)" },
 
   // Hall & pièces
   hall: { minHeight: "100vh", padding: "64px 16px", maxWidth: 1200, margin: "0 auto", position: "relative" },
@@ -583,4 +536,11 @@ const styles = {
      radial-gradient(1px 1px at 88% 66%, #ffffff, transparent)`, backgroundRepeat: "no-repeat", animation: "twinkle 6s ease-in-out infinite" },
   fog: { position: "fixed", inset: 0, zIndex: -1, pointerEvents: "none", background: `radial-gradient(60% 30% at 50% 10%, rgba(255,255,255,.08), transparent),
      radial-gradient(40% 20% at 30% 80%, rgba(255,255,255,.06), transparent)` },
+
+  // Extra pour iframe Booracle
+  iframeWrap: { position: "relative", width: "100%", paddingTop: "62%", background: "rgba(0,0,0,.25)", borderRadius: 12, overflow: "hidden", border: "1px solid rgba(255,255,255,.2)" },
+  iframe: { position: "absolute", inset: 0, width: "100%", height: "100%", border: "0" },
+
+  // Lampe vacillante dans la salle d'étude
+  lamp: { position: "absolute", top: 40, right: 60, width: 18, height: 18, borderRadius: 999, background: "radial-gradient(circle at 50% 50%, #ffe9b0, #e9b76a 60%, rgba(0,0,0,0) 70%)", animation: "lampFlicker 2.6s infinite", zIndex: 1 },
 };
