@@ -14,17 +14,61 @@ import React, { useState, useMemo } from "react";
 "use client";
 
 const BOORACLE_URL = "https://booracle.example.com"; // ← à remplacer quand tu auras le lien
+// Effets sonores (dépose tes mp3/ogg dans /public)
+const DOOR_CREAK_URL = "/door-creak.mp3"; // grincement de porte
+const HALL_CHIME_URL = "/hall-chimes.mp3";  // léger carillon en boucle
 
 export default function Site() {
   const [entered, setEntered] = useState(false);
   const [room, setRoom] = useState(null); // "labo" | "etude" | "ghostbox" | null
+  const [muted, setMuted] = useState(false);
 
-  const handleEnter = () => setEntered(true);
+  // Précharger les sons côté client
+  const [creak, setCreak] = useState(null);
+  const [chime, setChime] = useState(null);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const c = new Audio(DOOR_CREAK_URL);
+    const h = new Audio(HALL_CHIME_URL);
+    c.volume = 0.6; // grincement
+    h.volume = 0.25; // carillon doux
+    h.loop = true;
+    setCreak(c);
+    setChime(h);
+  }, []);
+
+  const handleEnter = () => {
+    setEntered(true);
+    if (creak && !muted) {
+      try { creak.currentTime = 0; creak.play(); } catch {}
+    }
+  };
+
+  // Lancer/arrêter le carillon dans le hall
+  React.useEffect(() => {
+    if (!entered || !chime) return;
+    if (!muted) {
+      try { chime.currentTime = 0; chime.play(); } catch {}
+    } else {
+      try { chime.pause(); } catch {}
+    }
+    return () => { try { chime.pause(); } catch {} };
+  }, [entered, chime, muted]);
+
+  const toggleMute = () => setMuted((m) => !m);
 
   return (
     <div style={styles.app}>
       <BackgroundFX />
-      {!entered ? <Landing onEnter={handleEnter} /> : <Hall room={room} setRoom={setRoom} />}
+      {!entered ? (
+        <Landing onEnter={handleEnter} />
+      ) : (
+        <Hall room={room} setRoom={setRoom} />
+      )}
+      <button onClick={toggleMute} style={styles.muteFloating} aria-label={muted ? "Activer le son" : "Couper le son"}>
+        {muted ? "🔇" : "🔊"}
+      </button>
       <GlobalStyles />
     </div>
   );
@@ -246,8 +290,7 @@ const styles = {
   door: {
     position: "absolute", inset: 0, borderRadius: 14,
     background:
-      "linear-gradient(180deg, #3b2d1f 0%, #2e2419 40%, #251d14 100%),
-      repeating-linear-gradient(90deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 24px)",
+      "linear-gradient(180deg, #3b2d1f 0%, #2e2419 40%, #251d14 100%),\n      repeating-linear-gradient(90deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 24px)",
     border: "1px solid rgba(255,255,255,0.18)",
     boxShadow: "inset 0 0 0 1px rgba(0,0,0,.8), 0 30px 80px rgba(0,0,0,.6)",
     display: "grid", placeItems: "center",
@@ -270,41 +313,6 @@ const styles = {
   miniDoorBtn: { background: "transparent", border: "none", textAlign: "center", cursor: "pointer" },
   miniDoorBody: { position: "relative", height: 240, borderRadius: 12, border: "1px solid rgba(255,255,255,.15)",
     background:
-      "linear-gradient(180deg, #3b2d1f 0%, #2e2419 40%, #251d14 100%),
-      repeating-linear-gradient(90deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 22px)",
+      "linear-gradient(180deg, #3b2d1f 0%, #2e2419 40%, #251d14 100%),\n      repeating-linear-gradient(90deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 22px)",
     boxShadow: "inset 0 0 0 1px rgba(0,0,0,.8), 0 20px 50px rgba(0,0,0,.4)",
-    transition: "transform .35s ease, filter .35s ease" },
-  miniDoorTop: { position: "absolute", top: 12, left: 0, right: 0, display: "grid", placeItems: "center" },
-  miniDoorIcon: { fontSize: 28 },
-  miniDoorPlate: { position: "absolute", bottom: 12, left: "50%", transform: "translateX(-50%)", padding: "4px 10px",
-    borderRadius: 8, border: "1px solid rgba(255,255,255,.25)", background: "rgba(0,0,0,.35)", fontFamily: "serif", letterSpacing: 1 },
-  miniDoorCaption: { marginTop: 10, opacity: .85 },
-
-  room: { marginTop: 16 },
-  roomHeader: { display: "flex", alignItems: "center", gap: 12, marginBottom: 16 },
-  backBtn: { background: "rgba(255,255,255,.1)", border: "1px solid rgba(255,255,255,.2)", color: "#fff", padding: "8px 12px", borderRadius: 10, cursor: "pointer" },
-  roomTitle: { fontFamily: "serif", fontSize: 24 },
-  roomSub: { opacity: .8 },
-  roomContent: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 16 },
-  card: { border: "1px solid rgba(255,255,255,.15)", background: "rgba(255,255,255,.05)", borderRadius: 14, padding: 16, boxShadow: "0 10px 30px rgba(0,0,0,.35)" },
-  cardTitle: { fontFamily: "serif", fontSize: 18, margin: "0 0 8px" },
-  p: { opacity: .85, lineHeight: 1.5 },
-  list: { margin: 0, paddingLeft: 18, lineHeight: 1.6 },
-  textarea: { width: "100%", minHeight: 140, background: "rgba(0,0,0,.35)", color: "#fff", border: "1px solid rgba(255,255,255,.15)", borderRadius: 10, padding: 10 },
-  primaryBtn: { background: "#fff", color: "#111827", border: "1px solid rgba(255,255,255,.2)", padding: "8px 12px", borderRadius: 10, cursor: "pointer", fontWeight: 600 },
-  secondaryBtn: { background: "transparent", color: "#fff", border: "1px solid rgba(255,255,255,.35)", padding: "8px 12px", borderRadius: 10, cursor: "pointer" },
-  saved: { fontSize: 12, color: "#86efac", marginTop: 6 },
-
-  bgGradient: { position: "fixed", inset: 0, zIndex: -3,
-    background: "radial-gradient(1200px 600px at 50% -10%, rgba(99,102,241,.25), transparent),
-                radial-gradient(1000px 700px at 120% 10%, rgba(236,72,153,.12), transparent),
-                linear-gradient(180deg, #0b0f1a 10%, #0b0f1a)" },
-  stars: { position: "fixed", inset: 0, zIndex: -2, opacity: .35, backgroundImage:
-    "radial-gradient(1px 1px at 12% 18%, #ffffff, transparent),
-     radial-gradient(1px 1px at 72% 8%, #ffffff, transparent),
-     radial-gradient(1px 1px at 22% 78%, #ffffff, transparent),
-     radial-gradient(1px 1px at 88% 66%, #ffffff, transparent)", backgroundRepeat: "no-repeat", animation: "twinkle 6s ease-in-out infinite" },
-  fog: { position: "fixed", inset: 0, zIndex: -1, pointerEvents: "none", background:
-    "radial-gradient(60% 30% at 50% 10%, rgba(255,255,255,.08), transparent),
-     radial-gradient(40% 20% at 30% 80%, rgba(255,255,255,.06), transparent)" },
-};
+    transition: "transform .35s ease, filter
