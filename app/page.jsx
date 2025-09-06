@@ -2,20 +2,22 @@
 
 import React, { useState, useMemo } from "react";
 
-// URLs externes (modifie si besoin)
-const BOORACLE_URL = "https://booracle.example.com"; // ← à remplacer quand tu auras le lien
+// ——— URLs externes (modifie si besoin)
+const BOORACLE_URL = "https://booracle.example.com"; // à remplacer quand tu auras le lien
 
-// Effets sonores (dépose tes mp3/ogg dans /public)
-const DOOR_CREAK_URL = "/door-creak.mp3"; // grincement de porte
-const HALL_CHIME_URL = "/hall-chimes.mp3"; // carillon d'accueil (lecture unique)
-const BACKGROUND_MUSIC_URL = "/bg-music.mp3"; // musique de fond après le carillon (optionnelle)
+// ——— Sons (mets les fichiers dans /public)
+const DOOR_CREAK_URL = "/door-creak.mp3";   // grincement de porte
+const HALL_CHIME_URL = "/hall-chimes.mp3";  // carillon d'accueil (lecture unique)
+const BACKGROUND_MUSIC_URL = "/bg-music.mp3"; // musique de fond (optionnelle)
 
+// ——————————————————————————————————————————————
+// Page racine
 export default function Site() {
   const [entered, setEntered] = useState(false);
   const [room, setRoom] = useState(null); // "labo" | "etude" | "ghostbox" | null
   const [muted, setMuted] = useState(false);
 
-  // Sons
+  // Audio
   const [creak, setCreak] = useState(null);
   const [chime, setChime] = useState(null);
   const [bgm, setBgm] = useState(null);
@@ -23,12 +25,14 @@ export default function Site() {
 
   React.useEffect(() => {
     if (typeof window === "undefined") return;
+
     const c = new Audio(DOOR_CREAK_URL);
     const h = new Audio(HALL_CHIME_URL);
     const b = new Audio(BACKGROUND_MUSIC_URL);
+
     c.volume = 0.6; // grincement
     h.volume = 0.25; // carillon doux
-    h.loop = false; // une seule fois
+    h.loop = false;  // lecture unique
     b.volume = 0.20; // musique de fond discrète
     b.loop = true;
 
@@ -58,7 +62,7 @@ export default function Site() {
     }
   };
 
-  // Lecture du carillon (une fois) puis musique de fond
+  // Carillon (une fois) puis musique de fond
   React.useEffect(() => {
     if (!entered || !chime) return;
     if (muted) {
@@ -66,14 +70,10 @@ export default function Site() {
       try { bgm && bgm.pause(); } catch {}
       return;
     }
-    // Si le carillon n'a pas encore fini, on le joue
     if (!chimeEnded) {
       try { chime.currentTime = 0; chime.play(); } catch {}
-    } else {
-      // Sinon, on lance/relance la musique de fond (si présente)
-      if (bgm) {
-        try { bgm.currentTime = 0; bgm.play(); } catch {}
-      }
+    } else if (bgm) {
+      try { bgm.play(); } catch {}
     }
   }, [entered, muted, chime, bgm, chimeEnded]);
 
@@ -103,31 +103,41 @@ export default function Site() {
       ) : (
         <Hall room={room} setRoom={setRoom} />
       )}
-      <button onClick={toggleMute} style={styles.muteFloating} aria-label={muted ? "Activer le son" : "Couper le son"}>
+
+      <button
+        onClick={toggleMute}
+        style={styles.muteFloating}
+        aria-label={muted ? "Activer le son" : "Couper le son"}
+      >
         {muted ? "🔇" : "🔊"}
       </button>
+
       <GlobalStyles />
     </div>
   );
 }
 
 // ——————————————————————————————————————————————
-// Accueil — Porte ancienne sur fond image
+// Accueil — Porte ancienne réaliste
 function Landing({ onEnter }) {
   const [opened, setOpened] = useState(false);
+
   const handleClick = () => {
     if (opened) return;
     setOpened(true);
     setTimeout(() => onEnter(), 900);
   };
+
   return (
-    <section style={{ ...styles.fullscreen, ...bg("/door.jpg") }} aria-label="Accueil — Porte du Labo Fantôme">
+    <section
+      style={{ ...styles.fullscreen, ...bg("/door.jpg") }}
+      aria-label="Accueil — Porte du Labo Fantôme"
+    >
       <div style={styles.bgOverlay} />
       <div style={styles.centerCol}>
         <h1 style={styles.title}>Le Labo Fantôme — École</h1>
         <p style={styles.subtitle}>Une porte s'entrouvre entre visible et invisible…</p>
 
-        {/* Cadre + porte texturée bois avec panneaux, charnières, poignée */}
         <div
           style={styles.doorWrap}
           onClick={handleClick}
@@ -137,7 +147,6 @@ function Landing({ onEnter }) {
           aria-label="Entrer dans le Labo"
         >
           <div style={styles.doorFrame} />
-
           <div
             style={{
               ...styles.door,
@@ -168,8 +177,10 @@ function Landing({ onEnter }) {
             {/* Lueur qui s'échappe */}
             <div style={styles.doorGlow} />
           </div>
+
           <div style={styles.doorShadow} />
         </div>
+
         <p style={styles.hint}>Cliquer la porte pour entrer</p>
       </div>
     </section>
@@ -177,7 +188,7 @@ function Landing({ onEnter }) {
 }
 
 // ——————————————————————————————————————————————
-// Hall — Choix des pièces (affichage exclusif)
+// Hall — affichage exclusif
 function Hall({ room, setRoom }) {
   // Affiche uniquement la pièce choisie (évite toute superposition)
   if (room === "labo") return <RoomLabo onBack={() => setRoom(null)} />;
@@ -186,16 +197,34 @@ function Hall({ room, setRoom }) {
 
   // Sinon, afficher le Hall seul
   return (
-    <section style={{ ...styles.hall, ...bg("/hall.jpg") }} aria-label="Hall — Choisir une pièce">
+    <section
+      style={{ ...styles.hall, ...bg("/hall.jpg") }}
+      aria-label="Hall — Choisir une pièce"
+    >
       <div style={styles.bgOverlay} />
       <header style={styles.hallHeader}>
         <h2 style={styles.hallTitle}>Hall du Labo</h2>
         <p style={styles.hallSub}>Choisis une porte pour continuer</p>
       </header>
       <div style={styles.doorsGrid}>
-        <MiniDoor title="Le Labo" subtitle="TCI & enregistrements" icon="🎙️" onClick={() => setRoom("labo")} />
-        <MiniDoor title="Salle d'étude" subtitle="Bibliothèque, Livret, Booracle" icon="📚" onClick={() => setRoom("etude")} />
-        <MiniDoor title="GhostBox" subtitle="Console en ligne" icon="📻" onClick={() => setRoom("ghostbox")} />
+        <MiniDoor
+          title="Le Labo"
+          subtitle="TCI & enregistrements"
+          icon="🎙️"
+          onClick={() => setRoom("labo")}
+        />
+        <MiniDoor
+          title="Salle d'étude"
+          subtitle="Bibliothèque, Livret, Booracle"
+          icon="📚"
+          onClick={() => setRoom("etude")}
+        />
+        <MiniDoor
+          title="GhostBox"
+          subtitle="Console en ligne"
+          icon="📻"
+          onClick={() => setRoom("ghostbox")}
+        />
       </div>
     </section>
   );
@@ -222,7 +251,11 @@ function RoomLabo({ onBack }) {
     <div style={{ ...styles.roomSection, ...bg("/lab.jpg") }}>
       <div style={styles.bgOverlay} />
       <div style={styles.room}>
-        <RoomHeader title="Le Labo" subtitle="Réception — Réflexion — Transmission" onBack={onBack} />
+        <RoomHeader
+          title="Le Labo"
+          subtitle="Réception — Réflexion — Transmission"
+          onBack={onBack}
+        />
         <div style={styles.roomContent}>
           <Card>
             <h3 style={styles.cardTitle}>Protocole d'enregistrement (démo)</h3>
@@ -236,7 +269,10 @@ function RoomLabo({ onBack }) {
           </Card>
           <Card>
             <h3 style={styles.cardTitle}>Carnet de labo (bloc-notes local)</h3>
-            <NotePad storageKey="labo_note" placeholder="Ex. Hypothèse: mot 'clairière' perçu; 03:12 chuchotement; Carte Booracle: 'Lumière'…" />
+            <NotePad
+              storageKey="labo_note"
+              placeholder="Ex. Hypothèse: mot 'clairière' perçu; 03:12 chuchotement; Carte Booracle: 'Lumière'…"
+            />
           </Card>
         </div>
       </div>
@@ -251,16 +287,30 @@ function RoomEtude({ onBack }) {
       {/* Lampe vacillante */}
       <div style={styles.lamp} />
       <div style={styles.room}>
-        <RoomHeader title="Salle d'étude" subtitle="Bibliothèque — Livret — Booracle" onBack={onBack} />
+        <RoomHeader
+          title="Salle d'étude"
+          subtitle="Bibliothèque — Livret — Booracle"
+          onBack={onBack}
+        />
         <div style={styles.roomContent}>
           <Card>
             <h3 style={styles.cardTitle}>Livret d'étude</h3>
-            <p style={styles.p}>Ton livret interactif (flipbook/PDF) pourra être lié ici (bouton ou aperçu). Donne-moi l'URL quand tu l'as.</p>
-            <button style={styles.primaryBtn} onClick={() => alert("Ajoute l'URL du livret quand prêt.")}>Ouvrir le livret</button>
+            <p style={styles.p}>
+              Ton livret interactif (flipbook/PDF) pourra être lié ici (bouton ou
+              aperçu). Donne-moi l'URL quand tu l'as.
+            </p>
+            <button
+              style={styles.primaryBtn}
+              onClick={() => alert("Ajoute l'URL du livret quand prêt.")}
+            >
+              Ouvrir le livret
+            </button>
           </Card>
           <Card>
             <h3 style={styles.cardTitle}>Booracle en ligne</h3>
-            <p style={styles.p}>Instrument de pensée : tirer une carte avant/après une séance.</p>
+            <p style={styles.p}>
+              Instrument de pensée : tirer une carte avant/après une séance.
+            </p>
             <div style={styles.iframeWrap}>
               <iframe title="Booracle" src={BOORACLE_URL} style={styles.iframe} />
             </div>
@@ -276,12 +326,24 @@ function RoomGhostBox({ onBack }) {
     <div style={{ ...styles.roomSection, ...bg("/ghostbox.jpg") }}>
       <div style={styles.bgOverlay} />
       <div style={styles.room}>
-        <RoomHeader title="GhostBox" subtitle="Console en ligne (intégration à venir)" onBack={onBack} />
+        <RoomHeader
+          title="GhostBox"
+          subtitle="Console en ligne (intégration à venir)"
+          onBack={onBack}
+        />
         <div style={styles.roomContent}>
           <Card>
             <h3 style={styles.cardTitle}>Intégration prochaine</h3>
-            <p style={styles.p}>Quand tu auras une GhostBox web ou un lecteur/flux audio, on peut l'intégrer ici (iframe, audio HTML5, ou lien externe).</p>
-            <button style={styles.secondaryBtn} onClick={() => alert("On branchera l'URL de la GhostBox ici.")}>Préparer l'intégration</button>
+            <p style={styles.p}>
+              Quand tu auras une GhostBox web ou un lecteur/flux audio, on peut
+              l'intégrer ici (iframe, audio HTML5, ou lien externe).
+            </p>
+            <button
+              style={styles.secondaryBtn}
+              onClick={() => alert("On branchera l'URL de la GhostBox ici.")}
+            >
+              Préparer l'intégration
+            </button>
           </Card>
           <Card>
             <h3 style={styles.cardTitle}>Conseils d'usage</h3>
@@ -300,7 +362,9 @@ function RoomGhostBox({ onBack }) {
 function RoomHeader({ title, subtitle, onBack }) {
   return (
     <div style={styles.roomHeader}>
-      <button onClick={onBack} style={styles.backBtn} aria-label="Retour">← Retour</button>
+      <button onClick={onBack} style={styles.backBtn} aria-label="Retour">
+        ← Retour
+      </button>
       <div>
         <h3 style={styles.roomTitle}>{title}</h3>
         <p style={styles.roomSub}>{subtitle}</p>
@@ -314,20 +378,43 @@ function Card({ children }) {
 }
 
 function NotePad({ storageKey, placeholder }) {
-  const initial = useMemo(() => (typeof window !== "undefined" ? localStorage.getItem(storageKey) || "" : ""), [storageKey]);
+  const initial = useMemo(
+    () => (typeof window !== "undefined" ? localStorage.getItem(storageKey) || "" : ""),
+    [storageKey]
+  );
   const [v, setV] = useState(initial);
   const [saved, setSaved] = useState(false);
   return (
     <div>
       <textarea
         value={v}
-        onChange={(e) => { setV(e.target.value); setSaved(false); }}
+        onChange={(e) => {
+          setV(e.target.value);
+          setSaved(false);
+        }}
         placeholder={placeholder}
         style={styles.textarea}
       />
       <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-        <button style={styles.primaryBtn} onClick={() => { localStorage.setItem(storageKey, v); setSaved(true); }}>Enregistrer</button>
-        <button style={styles.secondaryBtn} onClick={() => { const s = localStorage.getItem(storageKey) || ""; setV(s); setSaved(false); }}>Recharger</button>
+        <button
+          style={styles.primaryBtn}
+          onClick={() => {
+            localStorage.setItem(storageKey, v);
+            setSaved(true);
+          }}
+        >
+          Enregistrer
+        </button>
+        <button
+          style={styles.secondaryBtn}
+          onClick={() => {
+            const s = localStorage.getItem(storageKey) || "";
+            setV(s);
+            setSaved(false);
+          }}
+        >
+          Recharger
+        </button>
       </div>
       {saved && <p style={styles.saved}>Enregistré ✓</p>}
     </div>
@@ -351,7 +438,10 @@ function GlobalStyles() {
       .door:hover { filter: brightness(1.05); }
       .beam { animation: glow 2.6s ease-in-out infinite; }
       @keyframes glow { 0%,100% { opacity: .15 } 50% { opacity: .35 } }
-      @keyframes lampFlicker { 0%,19%,21%,23%,25%,54%,56%,100% { opacity: .9; filter: drop-shadow(0 0 18px rgba(255,242,200,.55)); } 20%,24%,55% { opacity: .6; filter: drop-shadow(0 0 6px rgba(255,242,200,.25)); } }
+      @keyframes lampFlicker {
+        0%,19%,21%,23%,25%,54%,56%,100% { opacity: .9; filter: drop-shadow(0 0 18px rgba(255,242,200,.55)); }
+        20%,24%,55% { opacity: .6; filter: drop-shadow(0 0 6px rgba(255,242,200,.25)); }
+      }
     `}</style>
   );
 }
@@ -428,7 +518,8 @@ const styles = {
     height: 120,
     borderRadius: 10,
     border: "1px solid rgba(0,0,0,.7)",
-    boxShadow: "inset 0 0 0 1px rgba(255,255,255,.06), inset 0 10px 18px rgba(0,0,0,.35)",
+    boxShadow:
+      "inset 0 0 0 1px rgba(255,255,255,.06), inset 0 10px 18px rgba(0,0,0,.35)",
     background: `repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 2px, rgba(0,0,0,0) 2px 28px),
                  linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.25))`,
     backdropFilter: "blur(.2px)",
@@ -474,24 +565,62 @@ const styles = {
     opacity: 0.8,
     pointerEvents: "none",
   },
-  doorShadow: { position: "absolute", inset: -12, borderRadius: 18, background: "rgba(255,255,255,0.05)", filter: "blur(6px)" },
+  doorShadow: {
+    position: "absolute",
+    inset: -12,
+    borderRadius: 18,
+    background: "rgba(255,255,255,0.05)",
+    filter: "blur(6px)",
+  },
 
-  app: { minHeight: "100vh", background: "#0b0f1a", color: "#f6f6f6", position: "relative", overflowX: "hidden" },
-  fullscreen: { minHeight: "100vh", display: "grid", placeItems: "center", position: "relative", padding: "48px 16px" },
-  centerCol: { display: "flex", flexDirection: "column", alignItems: "center", gap: 12, textAlign: "center", zIndex: 1 },
+  // ——— Layout global
+  app: {
+    minHeight: "100vh",
+    background: "#0b0f1a",
+    color: "#f6f6f6",
+    position: "relative",
+    overflowX: "hidden",
+  },
+  fullscreen: {
+    minHeight: "100vh",
+    display: "grid",
+    placeItems: "center",
+    position: "relative",
+    padding: "48px 16px",
+  },
+  centerCol: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 12,
+    textAlign: "center",
+    zIndex: 1,
+  },
   title: { fontFamily: "serif", fontSize: 32, letterSpacing: 1, textShadow: "0 1px 0 #000" },
   subtitle: { opacity: 0.9, maxWidth: 700 },
   hint: { fontSize: 12, opacity: 0.7, marginTop: 10 },
 
   // Overlay doux au-dessus des fonds photos
-  bgOverlay: { position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(11,15,26,.4), rgba(11,15,26,.65))", backdropFilter: "blur(1px)" },
+  bgOverlay: {
+    position: "absolute",
+    inset: 0,
+    background: "linear-gradient(180deg, rgba(11,15,26,.4), rgba(11,15,26,.65))",
+    backdropFilter: "blur(1px)",
+  },
 
-  // Hall & pièces
+  // ——— Hall & pièces
   hall: { minHeight: "100vh", padding: "64px 16px", maxWidth: 1200, margin: "0 auto", position: "relative" },
   hallHeader: { textAlign: "center", marginBottom: 24, position: "relative", zIndex: 1 },
   hallTitle: { fontFamily: "serif", fontSize: 28 },
   hallSub: { opacity: 0.9 },
-  doorsGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 20, marginTop: 24, position: "relative", zIndex: 1 },
+  doorsGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))",
+    gap: 20,
+    marginTop: 24,
+    position: "relative",
+    zIndex: 1,
+  },
   miniDoorBtn: { background: "transparent", border: "none", textAlign: "center", cursor: "pointer" },
   miniDoorBody: {
     position: "relative",
@@ -505,42 +634,149 @@ const styles = {
   },
   miniDoorTop: { position: "absolute", top: 12, left: 0, right: 0, display: "grid", placeItems: "center" },
   miniDoorIcon: { fontSize: 28 },
-  miniDoorPlate: { position: "absolute", bottom: 12, left: "50%", transform: "translateX(-50%)", padding: "4px 10px", borderRadius: 8, border: "1px solid rgba(255,255,255,.25)", background: "rgba(0,0,0,.35)", fontFamily: "serif", letterSpacing: 1 },
+  miniDoorPlate: {
+    position: "absolute",
+    bottom: 12,
+    left: "50%",
+    transform: "translateX(-50%)",
+    padding: "4px 10px",
+    borderRadius: 8,
+    border: "1px solid rgba(255,255,255,.25)",
+    background: "rgba(0,0,0,.35)",
+    fontFamily: "serif",
+    letterSpacing: 1,
+  },
   miniDoorCaption: { marginTop: 10, opacity: 0.95 },
 
   roomSection: { position: "relative", minHeight: "100vh", padding: "32px 16px" },
-  room: { marginTop: 16, position: "relative", zIndex: 1, maxWidth: 1200, marginLeft: "auto", marginRight: "auto" },
+  room: {
+    marginTop: 16,
+    position: "relative",
+    zIndex: 1,
+    maxWidth: 1200,
+    marginLeft: "auto",
+    marginRight: "auto",
+  },
   roomHeader: { display: "flex", alignItems: "center", gap: 12, marginBottom: 16 },
-  backBtn: { background: "rgba(0,0,0,.35)", border: "1px solid rgba(255,255,255,.3)", color: "#fff", padding: "8px 12px", borderRadius: 10, cursor: "pointer" },
+  backBtn: {
+    background: "rgba(0,0,0,.35)",
+    border: "1px solid rgba(255,255,255,.3)",
+    color: "#fff",
+    padding: "8px 12px",
+    borderRadius: 10,
+    cursor: "pointer",
+  },
   roomTitle: { fontFamily: "serif", fontSize: 24 },
   roomSub: { opacity: 0.95 },
   roomContent: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 16 },
 
-  card: { border: "1px solid rgba(255,255,255,.25)", background: "rgba(0,0,0,.35)", borderRadius: 14, padding: 16, boxShadow: "0 10px 30px rgba(0,0,0,.35)" },
+  card: {
+    border: "1px solid rgba(255,255,255,.25)",
+    background: "rgba(0,0,0,.35)",
+    borderRadius: 14,
+    padding: 16,
+    boxShadow: "0 10px 30px rgba(0,0,0,.35)",
+  },
   cardTitle: { fontFamily: "serif", fontSize: 18, margin: "0 0 8px" },
   p: { opacity: 0.95, lineHeight: 1.6 },
   list: { margin: 0, paddingLeft: 18, lineHeight: 1.6 },
-  textarea: { width: "100%", minHeight: 140, background: "rgba(0,0,0,.35)", color: "#fff", border: "1px solid rgba(255,255,255,.25)", borderRadius: 10, padding: 10 },
-  primaryBtn: { background: "#fff", color: "#111827", border: "1px solid rgba(255,255,255,.2)", padding: "8px 12px", borderRadius: 10, cursor: "pointer", fontWeight: 600 },
-  secondaryBtn: { background: "transparent", color: "#fff", border: "1px solid rgba(255,255,255,.35)", padding: "8px 12px", borderRadius: 10, cursor: "pointer" },
+  textarea: {
+    width: "100%",
+    minHeight: 140,
+    background: "rgba(0,0,0,.35)",
+    color: "#fff",
+    border: "1px solid rgba(255,255,255,.25)",
+    borderRadius: 10,
+    padding: 10,
+  },
+  primaryBtn: {
+    background: "#fff",
+    color: "#111827",
+    border: "1px solid rgba(255,255,255,.2)",
+    padding: "8px 12px",
+    borderRadius: 10,
+    cursor: "pointer",
+    fontWeight: 600,
+  },
+  secondaryBtn: {
+    background: "transparent",
+    color: "#fff",
+    border: "1px solid rgba(255,255,255,.35)",
+    padding: "8px 12px",
+    borderRadius: 10,
+    cursor: "pointer",
+  },
   saved: { fontSize: 12, color: "#86efac", marginTop: 6 },
 
-  muteFloating: { position: "fixed", right: 14, bottom: 14, zIndex: 60, width: 44, height: 44, borderRadius: 12, background: "rgba(255,255,255,.1)", color: "#fff", border: "1px solid rgba(255,255,255,.25)", cursor: "pointer", boxShadow: "0 6px 18px rgba(0,0,0,.35)", fontSize: 22 },
+  muteFloating: {
+    position: "fixed",
+    right: 14,
+    bottom: 14,
+    zIndex: 60,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    background: "rgba(255,255,255,.1)",
+    color: "#fff",
+    border: "1px solid rgba(255,255,255,.25)",
+    cursor: "pointer",
+    boxShadow: "0 6px 18px rgba(0,0,0,.35)",
+    fontSize: 22,
+  },
 
-  bgGradient: { position: "fixed", inset: 0, zIndex: -3, background: `radial-gradient(1200px 600px at 50% -10%, rgba(99,102,241,.25), transparent),
+  // ——— Effets de fond
+  bgGradient: {
+    position: "fixed",
+    inset: 0,
+    zIndex: -3,
+    background: `radial-gradient(1200px 600px at 50% -10%, rgba(99,102,241,.25), transparent),
                 radial-gradient(1000px 700px at 120% 10%, rgba(236,72,153,.12), transparent),
-                linear-gradient(180deg, #0b0f1a 10%, #0b0f1a)` },
-  stars: { position: "fixed", inset: 0, zIndex: -2, opacity: 0.35, backgroundImage: `radial-gradient(1px 1px at 12% 18%, #ffffff, transparent),
+                linear-gradient(180deg, #0b0f1a 10%, #0b0f1a)`,
+  },
+  stars: {
+    position: "fixed",
+    inset: 0,
+    zIndex: -2,
+    opacity: 0.35,
+    backgroundImage: `radial-gradient(1px 1px at 12% 18%, #ffffff, transparent),
      radial-gradient(1px 1px at 72% 8%, #ffffff, transparent),
      radial-gradient(1px 1px at 22% 78%, #ffffff, transparent),
-     radial-gradient(1px 1px at 88% 66%, #ffffff, transparent)`, backgroundRepeat: "no-repeat", animation: "twinkle 6s ease-in-out infinite" },
-  fog: { position: "fixed", inset: 0, zIndex: -1, pointerEvents: "none", background: `radial-gradient(60% 30% at 50% 10%, rgba(255,255,255,.08), transparent),
-     radial-gradient(40% 20% at 30% 80%, rgba(255,255,255,.06), transparent)` },
+     radial-gradient(1px 1px at 88% 66%, #ffffff, transparent)`,
+    backgroundRepeat: "no-repeat",
+    animation: "twinkle 6s ease-in-out infinite",
+  },
+  fog: {
+    position: "fixed",
+    inset: 0,
+    zIndex: -1,
+    pointerEvents: "none",
+    background: `radial-gradient(60% 30% at 50% 10%, rgba(255,255,255,.08), transparent),
+     radial-gradient(40% 20% at 30% 80%, rgba(255,255,255,.06), transparent)`,
+  },
 
-  // Extra pour iframe Booracle
-  iframeWrap: { position: "relative", width: "100%", paddingTop: "62%", background: "rgba(0,0,0,.25)", borderRadius: 12, overflow: "hidden", border: "1px solid rgba(255,255,255,.2)" },
+  // ——— Iframe Booracle
+  iframeWrap: {
+    position: "relative",
+    width: "100%",
+    paddingTop: "62%",
+    background: "rgba(0,0,0,.25)",
+    borderRadius: 12,
+    overflow: "hidden",
+    border: "1px solid rgba(255,255,255,.2)",
+  },
   iframe: { position: "absolute", inset: 0, width: "100%", height: "100%", border: "0" },
 
-  // Lampe vacillante dans la salle d'étude
-  lamp: { position: "absolute", top: 40, right: 60, width: 18, height: 18, borderRadius: 999, background: "radial-gradient(circle at 50% 50%, #ffe9b0, #e9b76a 60%, rgba(0,0,0,0) 70%)", animation: "lampFlicker 2.6s infinite", zIndex: 1 },
+  // ——— Lampe salle d'étude
+  lamp: {
+    position: "absolute",
+    top: 40,
+    right: 60,
+    width: 18,
+    height: 18,
+    borderRadius: 999,
+    background:
+      "radial-gradient(circle at 50% 50%, #ffe9b0, #e9b76a 60%, rgba(0,0,0,0) 70%)",
+    animation: "lampFlicker 2.6s infinite",
+    zIndex: 1,
+  },
 };
