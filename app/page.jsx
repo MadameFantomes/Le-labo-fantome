@@ -315,4 +315,35 @@ const styles = {
     background:
       "linear-gradient(180deg, #3b2d1f 0%, #2e2419 40%, #251d14 100%),\n      repeating-linear-gradient(90deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 22px)",
     boxShadow: "inset 0 0 0 1px rgba(0,0,0,.8), 0 20px 50px rgba(0,0,0,.4)",
-    transition: "transform .35s ease, filter
+    transition: "transform .35s ease, filter .35s ease" },
+  miniDoorTop: { position: "absolute", top: 12, left: 0, right: 0, display: "grid", placeItems: "center" },
+  miniDoorIcon: { fontSize: 28 },
+  miniDoorPlate: { position: "absolute", bottom: 12, left: "50%", transform: "translateX(-50%)", padding: "4px 10px",
+    borderRadius: 8, border: "1px solid rgba(255,255,255,.25)", background: "rgba(0,0,0,.35)", fontFamily: "serif", letterSpacing: 1 },
+  miniDoorCaption: { marginTop: 10, opacity: .85 },
+
+  room: { marginTop: 16 },
+  roomHeader: { display: "flex", alignItems: "center", gap: 12, marginBottom: 16 },
+  backBtn: { background: "rgba(255,255,255,.1)", border: "1px solid rgba(255,255,255,.2)", color: "#fff", padding: "8px 12px", borderRadius: 10, cursor: "pointer" },
+  roomTitle: { fontFamily: "serif", fontSize: 24 },
+  roomSub: { opacity: .8 },
+  roomContent: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 16 },
+  card: { border: "1px solid rgba(255,255,255,.15)", background: "rgba(255,255,255,.05)", borderRadius: 14, padding: 16, boxShadow: "0 10px 30px rgba(0,0,0,.35)" },
+  cardTitle: { fontFamily: "serif", fontSize: 18, margin: "0 0 8px" },
+  p: { opacity: .85, lineHeight: 1.5 },
+  list: { margin: 0, paddingLeft: 18, lineHeight: 1.6 },
+  textarea: { width: "100%", minHeight: 140, background: "rgba(0,0,0,.35)", color: "#fff", border: "1px solid rgba(255,255,255,.15)", borderRadius: 10, padding: 10 },
+  primaryBtn: { background: "#fff", color: "#111827", border: "1px solid rgba(255,255,255,.2)", padding: "8px 12px", borderRadius: 10, cursor: "pointer", fontWeight: 600 },
+  secondaryBtn: { background: "transparent", color: "#fff", border: "1px solid rgba(255,255,255,.35)", padding: "8px 12px", borderRadius: 10, cursor: "pointer" },
+  saved: { fontSize: 12, color: "#86efac", marginTop: 6 },
+
+  muteFloating: { position: "fixed", right: 14, bottom: 14, zIndex: 60, width: 44, height: 44, borderRadius: 12,
+    background: "rgba(255,255,255,.1)", color: "#fff", border: "1px solid rgba(255,255,255,.25)", cursor: "pointer", boxShadow: "0 6px 18px rgba(0,0,0,.35)", fontSize: 22 },
+
+  bgGradient: { position: "fixed", inset: 0, zIndex: -3,
+    background: "radial-gradient(1200px 600px at 50% -10%, rgba(99,102,241,.25), transparent),\n                radial-gradient(1000px 700px at 120% 10%, rgba(236,72,153,.12), transparent),\n                linear-gradient(180deg, #0b0f1a 10%, #0b0f1a)" },
+  stars: { position: "fixed", inset: 0, zIndex: -2, opacity: .35, backgroundImage:
+    "radial-gradient(1px 1px at 12% 18%, #ffffff, transparent),\n     radial-gradient(1px 1px at 72% 8%, #ffffff, transparent),\n     radial-gradient(1px 1px at 22% 78%, #ffffff, transparent),\n     radial-gradient(1px 1px at 88% 66%, #ffffff, transparent)", backgroundRepeat: "no-repeat", animation: "twinkle 6s ease-in-out infinite" },
+  fog: { position: "fixed", inset: 0, zIndex: -1, pointerEvents: "none", background:
+    "radial-gradient(60% 30% at 50% 10%, rgba(255,255,255,.08), transparent),\n     radial-gradient(40% 20% at 30% 80%, rgba(255,255,255,.06), transparent)" },
+};
