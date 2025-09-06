@@ -1,4 +1,4 @@
-export const metadata = { title: "Labo Fantôme — École Mystique" };
+export const metadata = { title: "Le Labo Fantôme" };
 
 export default function RootLayout({ children }) {
   return (
