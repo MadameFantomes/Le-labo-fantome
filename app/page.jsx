@@ -163,12 +163,18 @@ function Landing({ onEnter }) {
 // ——————————————————————————————————————————————
 // Hall — Choix des pièces
 function Hall({ room, setRoom }) {
-  // Quand une pièce est choisie, on n'affiche QUE la pièce (pour éviter les superpositions)
-  if (room === "labo") return <RoomLabo onBack={() => setRoom(null)} />;
-  if (room === "etude") return <RoomEtude onBack={() => setRoom(null)} />;
-  if (room === "ghostbox") return <RoomGhostBox onBack={() => setRoom(null)} />;
+  // Affiche exclusivement la pièce choisie pour éviter toute superposition
+  if (room === "labo") {
+    return <RoomLabo onBack={() => setRoom(null)} />;
+  }
+  if (room === "etude") {
+    return <RoomEtude onBack={() => setRoom(null)} />;
+  }
+  if (room === "ghostbox") {
+    return <RoomGhostBox onBack={() => setRoom(null)} />;
+  }
 
-  // Sinon, on affiche le Hall seul
+  // Sinon, afficher le Hall seul
   return (
     <section style={{ ...styles.hall, ...bg("/hall.jpg") }} aria-label="Hall — Choisir une pièce">
       <div style={styles.bgOverlay} />
@@ -183,7 +189,8 @@ function Hall({ room, setRoom }) {
       </div>
     </section>
   );
-}) {
+}
+) {
   return (
     <section style={{ ...styles.hall, ...bg("/lab.jpg") }} aria-label="Hall — Choisir une pièce">
       <div style={styles.bgOverlay} />
