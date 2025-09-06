@@ -72,7 +72,7 @@ function Landing({ onEnter }) {
   const handleClick = () => {
     if (opened) return;
     setOpened(true);
-    setTimeout(() => onEnter(), 800);
+    setTimeout(() => onEnter(), 900);
   };
   return (
     <section style={{ ...styles.fullscreen, ...bg("/door.jpg") }} aria-label="Accueil — Porte du Labo Fantôme">
@@ -80,26 +80,51 @@ function Landing({ onEnter }) {
       <div style={styles.centerCol}>
         <h1 style={styles.title}>Le Labo Fantôme — École</h1>
         <p style={styles.subtitle}>Une porte s'entrouvre entre visible et invisible…</p>
+
+        {/* Cadre + porte texturée bois avec panneaux, charnières, poignée */}
         <div
           style={styles.doorWrap}
           onClick={handleClick}
           role="button"
           tabIndex={0}
-          onKeyDown={(e) => { if (e.key === "Enter") handleClick(); }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleClick();
+          }}
           aria-label="Entrer dans le Labo"
         >
-          <div style={styles.doorShadow} />
+          <div style={styles.doorFrame} />
+
           <div
             style={{
               ...styles.door,
-              transform: opened ? "perspective(800px) rotateY(-70deg)" : "none",
+              transform: opened ? "perspective(1100px) rotateY(-72deg)" : "none",
             }}
             className="door"
           >
+            {/* Charnières */}
+            <div style={styles.hingeTop} />
+            <div style={styles.hingeBottom} />
+
+            {/* Plaque titre */}
+            <div style={styles.doorPlaque}>LE LABO FANTÔME — ÉCOLE</div>
+
+            {/* Panneaux bois */}
+            <div style={styles.panelRow}>
+              <div style={styles.panel} />
+              <div style={styles.panel} />
+            </div>
+            <div style={styles.panelRow}>
+              <div style={styles.panel} />
+              <div style={styles.panel} />
+            </div>
+
+            {/* Poignée */}
             <div style={styles.doorKnob} />
-            <div style={styles.doorSign}>LABO</div>
+
+            {/* Lueur qui s'échappe */}
+            <div style={styles.doorGlow} />
           </div>
-          <div style={styles.lightBeam} className="beam" />
+          <div style={styles.doorShadow} />
         </div>
         <p style={styles.hint}>Cliquer la porte pour entrer</p>
       </div>
@@ -109,7 +134,7 @@ function Landing({ onEnter }) {
 
 // ——————————————————————————————————————————————
 // Hall — Choix des pièces
-function Hall({ room, setRoom }) {
+function Hall({ room, setRoom }) {({ room, setRoom }) {
   return (
     <section style={{ ...styles.hall, ...bg("/lab.jpg") }} aria-label="Hall — Choisir une pièce">
       <div style={styles.bgOverlay} />
@@ -301,6 +326,113 @@ function bg(url) {
 }
 
 const styles = {
+  // ——— Porte réaliste ———
+  doorWrap: {
+    position: "relative",
+    width: 300,
+    height: 500,
+    marginTop: 12,
+    cursor: "pointer",
+    zIndex: 1,
+    perspective: 1400,
+  },
+  doorFrame: {
+    position: "absolute",
+    inset: -10,
+    borderRadius: 18,
+    background: `linear-gradient(180deg, #2a2218, #140e08)`,
+    boxShadow: "0 25px 80px rgba(0,0,0,.6), inset 0 0 0 2px rgba(0,0,0,.8)",
+    border: "1px solid rgba(255,255,255,.12)",
+  },
+  door: {
+    position: "absolute",
+    inset: 0,
+    borderRadius: 14,
+    backgroundImage: `url(/door.jpg),
+      linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.45))`,
+    backgroundSize: "cover, 100% 100%",
+    backgroundPosition: "center",
+    backgroundBlendMode: "multiply",
+    border: "1px solid rgba(255,255,255,.08)",
+    boxShadow: "inset 0 0 0 1px rgba(0,0,0,.75), inset 0 20px 60px rgba(0,0,0,.35)",
+    transformOrigin: "left center",
+    transition: "transform .9s cubic-bezier(.2,.7,.1,1)",
+    overflow: "hidden",
+  },
+  doorPlaque: {
+    position: "absolute",
+    top: 18,
+    left: "50%",
+    transform: "translateX(-50%)",
+    padding: "6px 12px",
+    borderRadius: 10,
+    fontFamily: "serif",
+    letterSpacing: 1,
+    fontSize: 13,
+    color: "#f2e9d0",
+    background: "rgba(0,0,0,.35)",
+    border: "1px solid rgba(255,255,255,.25)",
+    textShadow: "0 1px 0 rgba(0,0,0,.6)",
+  },
+  panelRow: {
+    position: "absolute",
+    left: 14,
+    right: 14,
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: 12,
+  },
+  panel: {
+    height: 120,
+    borderRadius: 10,
+    border: "1px solid rgba(0,0,0,.7)",
+    boxShadow: "inset 0 0 0 1px rgba(255,255,255,.06), inset 0 10px 18px rgba(0,0,0,.35)",
+    background: `repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 2px, rgba(0,0,0,0) 2px 28px),
+                 linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.25))`,
+    backdropFilter: "blur(.2px)",
+  },
+  hingeTop: {
+    position: "absolute",
+    left: -6,
+    top: 110,
+    width: 14,
+    height: 36,
+    borderRadius: 4,
+    background: "linear-gradient(180deg, #b59b57, #6d5523)",
+    boxShadow: "0 2px 8px rgba(0,0,0,.5)",
+  },
+  hingeBottom: {
+    position: "absolute",
+    left: -6,
+    bottom: 110,
+    width: 14,
+    height: 36,
+    borderRadius: 4,
+    background: "linear-gradient(180deg, #b59b57, #6d5523)",
+    boxShadow: "0 2px 8px rgba(0,0,0,.5)",
+  },
+  doorKnob: {
+    position: "absolute",
+    right: 26,
+    top: "50%",
+    width: 18,
+    height: 18,
+    borderRadius: 999,
+    background: "radial-gradient(circle at 30% 30%, #e4c977, #826627)",
+    boxShadow: "0 0 10px rgba(255,220,120,.5)",
+  },
+  doorGlow: {
+    position: "absolute",
+    left: -2,
+    top: 0,
+    bottom: 0,
+    width: 22,
+    background: "linear-gradient(90deg, rgba(255,238,170,.55), rgba(255,238,170,0))",
+    filter: "blur(6px)",
+    opacity: .8,
+    pointerEvents: "none",
+  },
+
   // petite lampe vacillante dans la salle d'étude
   lamp: {
     position: "absolute",
