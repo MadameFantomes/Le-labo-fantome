@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from "react";
-
 "use client";
+
+import React, { useState, useMemo } from "react";
 
 // URLs externes (modifie si besoin)
 const BOORACLE_URL = "https://booracle.example.com"; // ← à remplacer quand tu auras le lien
