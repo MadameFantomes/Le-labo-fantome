@@ -186,7 +186,6 @@ function Landing({ onEnter }) {
     </section>
   );
 }
-
 // ——————————————————————————————————————————————
 // Hall — affichage exclusif
 function Hall({ room, setRoom }) {
@@ -195,39 +194,33 @@ function Hall({ room, setRoom }) {
   if (room === "etude") return <RoomEtude onBack={() => setRoom(null)} />;
   if (room === "ghostbox") return <RoomGhostBox onBack={() => setRoom(null)} />;
 
-  // Sinon, afficher le Hall seul
-  return (
-    <section
-      style={{ ...styles.hall, ...bg("/hall.jpg") }}
-      aria-label="Hall — Choisir une pièce"
-    >
-      <div style={styles.bgOverlay} />
-      <header style={styles.hallHeader}>
-        <h2 style={styles.hallTitle}>Hall du Labo</h2>
-        <p style={styles.hallSub}>Choisis une porte pour continuer</p>
-      </header>
-      <div style={styles.doorsGrid}>
-        <MiniDoor
-          title="Le Labo"
-          subtitle="TCI & enregistrements"
-          icon="🎙️"
-          onClick={() => setRoom("labo")}
-        />
-        <MiniDoor
-          title="Salle d'étude"
-          subtitle="Bibliothèque, Livret, Booracle"
-          icon="📚"
-          onClick={() => setRoom("etude")}
-        />
-        <MiniDoor
-          title="GhostBox"
-          subtitle="Console en ligne"
-          icon="📻"
-          onClick={() => setRoom("ghostbox")}
-        />
-      </div>
-    </section>
-  );
+```jsx
+// ——————————————————————————————————————————————
+// Hall — affichage exclusif
+function Hall({ room, setRoom }) {
+// Affiche uniquement la pièce choisie (évite toute superposition)
+if (room === "labo") return <RoomLabo onBack={() => setRoom(null)} />;
+if (room === "etude") return <RoomEtude onBack={() => setRoom(null)} />;
+if (room === "ghostbox") return <RoomGhostBox onBack={() => setRoom(null)} />;
+
+// Sinon, afficher le Hall seul
+return (
+ <section
+   style={{ ...styles.hall, ...bg("/hall.jpg") }}
+   aria-label="Hall — Choisir une pièce"
+ >
+   <div style={styles.bgOverlay} />
+   <header style={styles.hallHeader}>
+     <h2 style={styles.hallTitle}>Hall du Labo</h2>
+     <p style={styles.hallSub}>Choisis une porte pour continuer</p>
+   </header>
+   <div style={styles.doorsGrid}>
+     <MiniDoor title="Le Labo" subtitle="TCI & enregistrements" icon="🎙️" onClick={() => setRoom("labo")} />
+     <MiniDoor title="Salle d'étude" subtitle="Bibliothèque, Livret, Booracle" icon="📚" onClick={() => setRoom("etude")} />
+     <MiniDoor title="GhostBox" subtitle="Console en ligne" icon="📻" onClick={() => setRoom("ghostbox")} />
+   </div>
+ </section>
+);
 }
 
 function MiniDoor({ title, subtitle, icon, onClick }) {
