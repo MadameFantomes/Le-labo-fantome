@@ -1,523 +1,310 @@
+import React, { useState, useMemo } from "react";
+
+// ——————————————————————————————————————————————
+// Labo Fantôme — École Mystique (v2: Portes & Pièces)
+// - Zéro TypeScript, 100% JSX
+// - Fonctionne même SANS Tailwind (styles inline + <style>)
+// - Accueil: grande porte ancienne cliquable → s'ouvre → Hall avec 3 portes
+//   1) Le Labo (TCI & enregistrements)
+//   2) Salle d'étude (bibliothèque, livret, Booracle)
+//   3) GhostBox (intégration en ligne à venir)
+// - Remplace BOORACLE_URL par ton URL Vercel du Booracle quand prêt
+// ——————————————————————————————————————————————
+
 "use client";
-import React, { useMemo, useState } from "react";
 
-// ——————————————————————————————————————————————
-// Labo Fantôme — École Mystique (one‑file React site)
-// - TailwindCSS UI (no external component libs required)
-// - Sections: Accueil, Le Labo, Booracle, Parcours, Journal, Communauté, Inscription, FAQ
-// - "Harry Potter" vibe through gothic/mystic ambiance — sans contenu protégé
-// - Replace BOORACLE_URL with your deployed app (e.g., Vercel)
-// ——————————————————————————————————————————————
-
-const BOORACLE_URL = "https://booracle.example.com"; // TODO: remplace par ton URL Vercel
-
-const nav = [
-  { id: "accueil", label: "Accueil" },
-  { id: "labo", label: "Le Labo" },
-  { id: "booracle", label: "Booracle" },
-  { id: "parcours", label: "Parcours" },
-  { id: "journal", label: "Journal" },
-  { id: "communaute", label: "Communauté" },
-  { id: "inscription", label: "Inscription" },
-  { id: "faq", label: "FAQ" },
-];
-
-const curriculum = [
-  {
-    title: "Initiation — Les fondements",
-    parts: [
-      "Éthique & cadre d'une séance",
-      "Préparation du praticien·ne (ancrage, intention)",
-      "Matériel : micro, casque, spirit box, logiciel",
-      "Rituel d'ouverture avec Booracle (intention)",
-    ],
-  },
-  {
-    title: "Pratique — Réception & écoute",
-    parts: [
-      "Protocoles d'enregistrement (EVP/DRV)",
-      "Hygiène d'écoute, spectral vs symbolique",
-      "Repérer les artefacts & écueils",
-      "Journal de séance (carnet de labo)",
-    ],
-  },
-  {
-    title: "Analyse — Laboratoire de pensée",
-    parts: [
-      "Méthode R.R.T. : Réception — Réflexion — Transmission",
-      "Relier message & symbole (Booracle)",
-      "Doutes, hypothèses, validations croisées",
-      "Écrire une note d'observation",
-    ],
-  },
-  {
-    title: "Transmission — Accompagnement",
-    parts: [
-      "Restituer avec justesse & douceur",
-      "Accompagner l'endeuillé·e",
-      "Cadre pro & rémunération éthique",
-      "Supervision & communauté du Labo",
-    ],
-  },
-];
-
-const tiers = [
-  {
-    name: "Auditeur·rice libre",
-    price: "Gratuit",
-    perks: [
-      "Accès public au Booracle (cartes limitées)",
-      "News du Labo Fantôme",
-    ],
-    cta: "Essayer le Booracle",
-    href: "#booracle",
-  },
-  {
-    name: "Élève du Labo",
-    price: "€€",
-    perks: [
-      "Accès complet à la formation TCI",
-      "Booracle intégral + packs symboliques",
-      "Carnet de labo téléchargeable",
-      "Sessions collectives mensuelles",
-    ],
-    cta: "Rejoindre la formation",
-    href: "#inscription",
-  },
-  {
-    name: "Cercle de recherche",
-    price: "€€€",
-    perks: [
-      "Ateliers avancés & supervision",
-      "Projets participatifs (corpus anonymisé)",
-      "Publication « Carnets du Labo »",
-      "Accès prioritaire aux nouveautés",
-    ],
-    cta: "Candidater",
-    href: "#inscription",
-  },
-];
-
-function StarfieldBackground() {
-  return (
-    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10">
-      <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-indigo-950 to-slate-900" />
-      <div className="absolute inset-0 mix-blend-screen opacity-40" style={{
-        backgroundImage:
-          "radial-gradient(1px 1px at 20% 30%,#fff,transparent),radial-gradient(1px 1px at 60% 20%,#fff,transparent),radial-gradient(1px 1px at 80% 70%,#fff,transparent),radial-gradient(1px 1px at 30% 80%,#fff,transparent)",
-        backgroundSize: "3px 3px, 3px 3px, 3px 3px, 3px 3px"
-      }} />
-      <div className="absolute inset-x-0 top-0 h-64 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.08),transparent_60%)]" />
-    </div>
-  );
-}
-
-function Navbar() {
-  const [open, setOpen] = useState(false);
-  return (
-    <header className="sticky top-0 z-50 backdrop-blur supports-[backdrop-filter]:bg-slate-950/40 border-b border-white/10">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
-          <a href="#accueil" className="group inline-flex items-center gap-3">
-            <span className="h-8 w-8 rounded-full bg-white/10 shadow ring-1 ring-white/20 grid place-items-center">👻</span>
-            <span className="font-serif text-lg text-white tracking-wide">
-              Labo Fantôme <span className="text-white/60">— École Mystique</span>
-            </span>
-          </a>
-          <nav className="hidden md:flex items-center gap-6">
-            {nav.map((n) => (
-              <a key={n.id} href={`#${n.id}`} className="text-sm text-white/80 hover:text-white transition">
-                {n.label}
-              </a>
-            ))}
-            <a
-              href="#inscription"
-              className="rounded-2xl bg-white text-slate-900 px-4 py-2 text-sm font-medium shadow hover:shadow-lg transition"
-            >
-              Rejoindre
-            </a>
-          </nav>
-          <button onClick={() => setOpen(!open)} className="md:hidden text-white" aria-label="Menu">☰</button>
-        </div>
-      </div>
-      {open && (
-        <div className="md:hidden border-t border-white/10">
-          <div className="mx-auto max-w-7xl px-4 py-4 grid gap-3">
-            {nav.map((n) => (
-              <a key={n.id} href={`#${n.id}`} className="text-white/80" onClick={() => setOpen(false)}>
-                {n.label}
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
-    </header>
-  );
-}
-
-function Hero() {
-  return (
-    <section id="accueil" className="relative">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
-        <div className="grid lg:grid-cols-2 gap-10 items-center">
-          <div>
-            <h1 className="font-serif text-4xl sm:text-5xl leading-tight text-white">
-              Une école secrète… à ciel ouvert.
-            </h1>
-            <p className="mt-4 text-white/80 max-w-prose">
-              Bienvenue au <strong>Labo Fantôme</strong>, un laboratoire de pensée et de pratique autour de la
-              <em> Transcommunication Instrumentale (TCI)</em> :
-              réception sensible, réflexion symbolique, transmission éthique. Ici, on apprend en cherchant.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <a href="#booracle" className="rounded-2xl bg-white text-slate-900 px-5 py-3 text-sm font-medium shadow">
-                Ouvrir le Booracle
-              </a>
-              <a href="#parcours" className="rounded-2xl ring-1 ring-white/40 text-white px-5 py-3 text-sm font-medium">
-                Découvrir le parcours
-              </a>
-            </div>
-            <p className="mt-4 text-xs text-white/60">Univers doux, mystique et poétique — by @madamefantomes</p>
-          </div>
-          <div className="relative">
-            <div className="aspect-[4/3] rounded-3xl ring-1 ring-white/20 p-1 bg-white/5 shadow-xl">
-              <div className="h-full w-full rounded-2xl bg-gradient-to-br from-violet-900/40 via-fuchsia-900/30 to-slate-900 grid place-items-center">
-                <div className="text-center p-8">
-                  <div className="text-6xl">🔬👻</div>
-                  <h3 className="mt-4 font-serif text-2xl text-white">Le laboratoire mystique</h3>
-                  <p className="mt-2 text-white/75 max-w-sm mx-auto">
-                    Protocole, intuition et symboles : une pédagogie hybride pour explorer l'invisible avec douceur.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="absolute -bottom-6 -left-6 rotate-[-4deg]">
-              <Badge>Réception · Réflexion · Transmission</Badge>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function Badge({ children }) {
-  return (
-    <div className="inline-flex items-center gap-2 rounded-full bg-white/10 ring-1 ring-white/20 px-4 py-2 text-xs text-white shadow">
-      <span>✨</span>
-      <span>{children}</span>
-    </div>
-  );
-}
-
-function SectionTitle({ eyebrow, title, subtitle }) {
-  return (
-    <div className="mx-auto max-w-3xl text-center">
-      {eyebrow && <div className="text-white/50 text-xs tracking-widest uppercase">{eyebrow}</div>}
-      <h2 className="mt-2 font-serif text-3xl text-white">{title}</h2>
-      {subtitle && <p className="mt-3 text-white/75">{subtitle}</p>}
-    </div>
-  );
-}
-
-function LaboSection() {
-  const pillars = [
-    {
-      icon: "🎙️",
-      name: "Réception",
-      desc: "Protocole TCI, enregistrements, hygiène d'écoute et cadre juste.",
-    },
-    {
-      icon: "🃏",
-      name: "Réflexion",
-      desc: "Booracle comme instrument de pensée : symboles, résonances, hypothèses.",
-    },
-    {
-      icon: "🕊️",
-      name: "Transmission",
-      desc: "Restituer avec douceur, accompagner le deuil, éthique et supervision.",
-    },
-  ];
-  return (
-    <section id="labo" className="py-20">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionTitle
-          eyebrow="Méthode R·R·T"
-          title="Le Labo Fantôme : une pédagogie hybride"
-          subtitle="Réception — Réflexion — Transmission. Une école qui fonctionne comme un laboratoire : on observe, on relie, on transmet."
-        />
-        <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {pillars.map((p) => (
-            <div key={p.name} className="rounded-3xl bg-white/5 ring-1 ring-white/10 p-6 text-white/90 shadow-xl">
-              <div className="text-4xl">{p.icon}</div>
-              <h3 className="mt-3 font-serif text-xl text-white">{p.name}</h3>
-              <p className="mt-2 text-sm text-white/80">{p.desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function BooracleSection() {
-  return (
-    <section id="booracle" className="py-20">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionTitle
-          eyebrow="Instrument de pensée"
-          title="Le Booracle en ligne"
-          subtitle="Tire une carte pour poser une intention avant l'écoute, ou pour éclairer l'analyse après."
-        />
-        <div className="mt-10 grid lg:grid-cols-2 gap-8 items-start">
-          <div className="rounded-3xl overflow-hidden ring-1 ring-white/10 bg-white/5 shadow-xl">
-            <div className="aspect-[4/3]">
-              {/* Remplace l'iframe par ton app réelle quand elle est publiée */}
-              <iframe title="Booracle" src={BOORACLE_URL} className="h-full w-full" />
-            </div>
-          </div>
-          <div className="text-white/85">
-            <h3 className="font-serif text-2xl text-white">Rituel d'utilisation</h3>
-            <ol className="mt-4 space-y-3 text-sm list-decimal list-inside">
-              <li>Respire, pose ton intention, ouvre ton espace.</li>
-              <li>Tire une carte : note mots, images, émotions.</li>
-              <li>Enregistre ta séance TCI (protocole choisi).</li>
-              <li>Relis la carte : fait‑elle écho à un passage ?</li>
-              <li>Consigne tout dans le <em>carnet de labo</em>.</li>
-            </ol>
-            <div className="mt-6">
-              <a href="#journal" className="inline-flex items-center gap-2 rounded-2xl bg-white text-slate-900 px-4 py-2 text-sm font-medium shadow">
-                Ouvrir mon carnet de labo →
-              </a>
-            </div>
-            <p className="mt-6 text-xs text-white/60">Astuce : intègre le Booracle via QR code dans tes supports imprimés.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function ParcoursSection() {
-  return (
-    <section id="parcours" className="py-20">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionTitle
-          eyebrow="Curriculum"
-          title="Le parcours pédagogique"
-          subtitle="De l'initiation à la recherche collaborative. Chaque module inclut vidéo, fiches, rituels et exercices."
-        />
-        <div className="mt-10 grid lg:grid-cols-2 gap-8">
-          {curriculum.map((c) => (
-            <div key={c.title} className="rounded-3xl bg-white/5 ring-1 ring-white/10 p-6 text-white/85 shadow-xl">
-              <h3 className="font-serif text-xl text-white">{c.title}</h3>
-              <ul className="mt-3 space-y-2 text-sm list-disc list-inside">
-                {c.parts.map((p) => (
-                  <li key={p}>{p}</li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function JournalSection() {
-  const [note, setNote] = useState("");
-  const [saved, setSaved] = useState(false);
-  return (
-    <section id="journal" className="py-20">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionTitle
-          eyebrow="Carnet de labo"
-          title="Journal de séance (démo locale)"
-          subtitle="Saisis tes hypothèses, observations, extraits de messages et liens avec la carte tirée. (Dans cette démo, la note reste en mémoire locale du navigateur.)"
-        />
-        <div className="mt-8 grid lg:grid-cols-2 gap-8 items-start">
-          <div className="rounded-3xl p-6 ring-1 ring-white/10 bg-white/5 shadow-xl">
-            <label className="block text-sm text-white/80 mb-2">Ma note d'observation</label>
-            <textarea
-              value={note}
-              onChange={(e) => { setNote(e.target.value); setSaved(false); }}
-              className="w-full h-56 rounded-xl bg-black/30 text-white placeholder-white/40 p-4 ring-1 ring-white/15 focus:ring-2 focus:ring-white/30 outline-none"
-              placeholder="Ex. Hypothèse: mot 'clairière' perçu; Booracle: carte 'Lumière' ; recoupe avec chuchotement à 03:12…"
-            />
-            <div className="mt-4 flex gap-3">
-              <button
-                onClick={() => { localStorage.setItem("labo_note", note); setSaved(true); }}
-                className="rounded-2xl bg-white text-slate-900 px-4 py-2 text-sm font-medium shadow"
-              >
-                Enregistrer en local
-              </button>
-              <button
-                onClick={() => { const v = localStorage.getItem("labo_note") || ""; setNote(v); setSaved(false); }}
-                className="rounded-2xl ring-1 ring-white/40 text-white px-4 py-2 text-sm"
-              >
-                Recharger
-              </button>
-            </div>
-            {saved && <p className="mt-2 text-xs text-emerald-300">Enregistré dans le navigateur ✓</p>}
-          </div>
-          <div className="rounded-3xl p-6 ring-1 ring-white/10 bg-white/5 text-white/80 shadow-xl">
-            <h4 className="font-serif text-lg text-white">Grille d'observation</h4>
-            <ul className="mt-3 space-y-2 text-sm list-disc list-inside">
-              <li><strong>Réception</strong> : contexte, durée, matériel, timecodes notables.</li>
-              <li><strong>Réflexion</strong> : mots-clés, symboles, carte Booracle, hypothèses.</li>
-              <li><strong>Transmission</strong> : à qui ? quel besoin ? quelle forme juste ?</li>
-              <li><strong>Éthique</strong> : cadre, consentement, limites, ressources.</li>
-            </ul>
-            <p className="mt-4 text-xs text-white/60">Astuce : exporte ensuite ta note dans ton carnet PDF officiel.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function CommunitySection() {
-  const items = [
-    {
-      title: "Tirage hebdo du Labo",
-      desc: "Chaque lundi, une carte commune + discussion sur les résonances.",
-    },
-    {
-      title: "Écoutes croisées",
-      desc: "S'entraîner à repérer les artefacts, comparer sans s'influencer.",
-    },
-    {
-      title: "Supervision douce",
-      desc: "Présenter un cas délicat, réfléchir au cadre juste ensemble.",
-    },
-  ];
-  return (
-    <section id="communaute" className="py-20">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionTitle
-          eyebrow="L'école vivante"
-          title="La communauté du Labo Fantôme"
-          subtitle="Un espace accueillant pour pratiquer, réfléchir, et publier des recherches collectives."
-        />
-        <div className="mt-10 grid md:grid-cols-3 gap-6">
-          {items.map((it) => (
-            <div key={it.title} className="rounded-3xl bg-white/5 ring-1 ring-white/10 p-6 text-white/85 shadow-xl">
-              <h4 className="font-serif text-lg text-white">{it.title}</h4>
-              <p className="mt-2 text-sm">{it.desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function PricingSection() {
-  return (
-    <section id="inscription" className="py-20">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionTitle
-          eyebrow="S'inscrire"
-          title="Choisir sa porte d'entrée"
-          subtitle="Commence gratuitement, puis rejoins la formation quand tu te sens appelée."
-        />
-        <div className="mt-10 grid md:grid-cols-3 gap-6">
-          {tiers.map((t) => (
-            <div key={t.name} className="rounded-3xl bg-white/5 ring-1 ring-white/10 p-6 text-white/85 shadow-xl flex flex-col">
-              <h4 className="font-serif text-xl text-white">{t.name}</h4>
-              <div className="mt-2 text-3xl text-white">{t.price}</div>
-              <ul className="mt-4 space-y-2 text-sm list-disc list-inside flex-1">
-                {t.perks.map((p) => (
-                  <li key={p}>{p}</li>
-                ))}
-              </ul>
-              <a href={t.href} className="mt-6 rounded-2xl bg-white text-slate-900 px-4 py-2 text-sm font-medium text-center shadow">
-                {t.cta}
-              </a>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function FAQ() {
-  const faqs = [
-    {
-      q: "Est‑ce une école 'Harry Potter' ?",
-      a: "Non. On s'inspire d'une ambiance gothique‑poétique (laboratoire mystique), sans utiliser d'éléments protégés. C'est une pédagogie unique centrée sur la TCI et l'éthique.",
-    },
-    {
-      q: "Comment accéder au Booracle complet ?",
-      a: "La version publique est limitée. L'accès intégral (avec packs symboliques) est inclus pour les élèves inscrits.",
-    },
-    {
-      q: "Puis‑je pratiquer si je suis débutant·e ?",
-      a: "Oui. L'initiation couvre le cadre, le matériel, et des exercices progressifs. L'important est la douceur et la rigueur.",
-    },
-    {
-      q: "Y a‑t‑il un accompagnement ?",
-      a: "Oui : lives mensuels, écoutes croisées, supervision douce, et publications collectives.",
-    },
-  ];
-  return (
-    <section id="faq" className="py-20">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <SectionTitle eyebrow="Questions" title="FAQ" />
-        <div className="mt-10 grid md:grid-cols-2 gap-6">
-          {faqs.map((f) => (
-            <div key={f.q} className="rounded-3xl bg-white/5 ring-1 ring-white/10 p-6 text-white/85 shadow-xl">
-              <h4 className="font-serif text-lg text-white">{f.q}</h4>
-              <p className="mt-2 text-sm">{f.a}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function Footer() {
-  return (
-    <footer className="py-12 border-t border-white/10">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-white/70">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <p className="text-sm">© {new Date().getFullYear()} Madame Fantômes — Labo Fantôme</p>
-          <div className="flex items-center gap-4 text-sm">
-            <a href="https://www.instagram.com/madamefantomes" target="_blank" rel="noreferrer" className="hover:text-white">@madamefantomes</a>
-            <a href="#" className="hover:text-white">Mentions légales</a>
-            <a href="#" className="hover:text-white">Contact</a>
-          </div>
-        </div>
-      </div>
-    </footer>
-  );
-}
+const BOORACLE_URL = "https://booracle.example.com"; // ← à remplacer quand tu auras le lien
 
 export default function Site() {
-  // Charger une éventuelle note sauvegardée pour la démo Journal
-  const initial = useMemo(() => (typeof window !== 'undefined' ? localStorage.getItem("labo_note") || "" : ""), []);
-  const [boot, setBoot] = useState(false);
+  const [entered, setEntered] = useState(false);
+  const [room, setRoom] = useState(null); // "labo" | "etude" | "ghostbox" | null
 
-  React.useEffect(() => {
-    setBoot(true);
-  }, []);
+  const handleEnter = () => setEntered(true);
 
   return (
-    <div className="min-h-screen font-[ui-sans-serif,system-ui,Segoe_UI,Roboto,Helvetica,Arial] antialiased">
-      <StarfieldBackground />
-      <Navbar />
-      <Hero />
-      <LaboSection />
-      <BooracleSection />
-      <ParcoursSection />
-      {/* Hydrate Journal with any initial note */}
-      {boot && <JournalSection key={initial.length} />}
-      <CommunitySection />
-      <PricingSection />
-      <FAQ />
-      <Footer />
+    <div style={styles.app}>
+      <BackgroundFX />
+      {!entered ? <Landing onEnter={handleEnter} /> : <Hall room={room} setRoom={setRoom} />}
+      <GlobalStyles />
     </div>
   );
 }
+
+function Landing({ onEnter }) {
+  return (
+    <section style={styles.fullscreen} aria-label="Accueil — Porte du Labo Fantôme">
+      <div style={styles.centerCol}>
+        <h1 style={styles.title}>Le Labo Fantôme — École</h1>
+        <p style={styles.subtitle}>Une porte s'entrouvre entre visible et invisible…</p>
+        <div style={styles.doorWrap} onClick={onEnter} role="button" tabIndex={0}
+             onKeyDown={(e) => (e.key === "Enter" ? onEnter() : null)} aria-label="Entrer dans le Labo">
+          <div style={styles.doorShadow} />
+          <div style={styles.door} className="door">
+            <div style={styles.doorKnob} />
+            <div style={styles.doorSign}>LABO</div>
+          </div>
+          <div style={styles.lightBeam} className="beam" />
+        </div>
+        <p style={styles.hint}>Cliquer la porte pour entrer</p>
+      </div>
+    </section>
+  );
+}
+
+function Hall({ room, setRoom }) {
+  return (
+    <section style={styles.hall} aria-label="Hall — Choisir une pièce">
+      <header style={styles.hallHeader}>
+        <h2 style={styles.hallTitle}>Hall du Labo</h2>
+        <p style={styles.hallSub}>Choisis une porte pour continuer</p>
+      </header>
+
+      {!room && (
+        <div style={styles.doorsGrid}>
+          <MiniDoor
+            title="Le Labo"
+            subtitle="TCI & enregistrements"
+            icon="🎙️"
+            onClick={() => setRoom("labo")}
+          />
+          <MiniDoor
+            title="Salle d'étude"
+            subtitle="Bibliothèque, Livret, Booracle"
+            icon="📚"
+            onClick={() => setRoom("etude")}
+          />
+          <MiniDoor
+            title="GhostBox"
+            subtitle="Console en ligne (bientôt)"
+            icon="📻"
+            onClick={() => setRoom("ghostbox")}
+          />
+        </div>
+      )}
+
+      {room === "labo" && <RoomLabo onBack={() => setRoom(null)} />}
+      {room === "etude" && <RoomEtude onBack={() => setRoom(null)} />}
+      {room === "ghostbox" && <RoomGhostBox onBack={() => setRoom(null)} />}
+    </section>
+  );
+}
+
+function MiniDoor({ title, subtitle, icon, onClick }) {
+  return (
+    <button onClick={onClick} style={styles.miniDoorBtn} aria-label={title}>
+      <div style={styles.miniDoorBody}>
+        <div style={styles.miniDoorTop}>
+          <span style={styles.miniDoorIcon}>{icon}</span>
+        </div>
+        <div style={styles.miniDoorPlate}>{title}</div>
+      </div>
+      <div style={styles.miniDoorCaption}>{subtitle}</div>
+    </button>
+  );
+}
+
+// ——— Pièces ————————————————————————————————
+function RoomLabo({ onBack }) {
+  return (
+    <div style={styles.room}>
+      <RoomHeader title="Le Labo" subtitle="Réception — Réflexion — Transmission" onBack={onBack} />
+      <div style={styles.roomContent}>
+        <Card>
+          <h3 style={styles.cardTitle}>Protocole d'enregistrement (démo)</h3>
+          <ol style={styles.list}>
+            <li>Prépare l'espace : silence, intention, timer 10–15 min.</li>
+            <li>Matériel : micro + casque ; note la date/heure.</li>
+            <li>Enregistre ; marque les timecodes notables.</li>
+            <li>À l'écoute : sépare artefacts / voix / symboles.</li>
+            <li>Consigne tout dans le carnet de labo.</li>
+          </ol>
+        </Card>
+        <Card>
+          <h3 style={styles.cardTitle}>Carnet de labo (bloc-notes local)</h3>
+          <NotePad storageKey="labo_note" placeholder="Ex. Hypothèse: mot 'clairière' perçu; 03:12 chuchotement; Carte Booracle: 'Lumière'…" />
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function RoomEtude({ onBack }) {
+  return (
+    <div style={styles.room}>
+      <RoomHeader title="Salle d'étude" subtitle="Bibliothèque — Livret — Booracle" onBack={onBack} />
+      <div style={styles.roomContent}>
+        <Card>
+          <h3 style={styles.cardTitle}>Livret d'étude</h3>
+          <p style={styles.p}>Ton livret interactif (flipbook/PDF) pourra être lié ici (bouton ou aperçu). Donne-moi l'URL quand tu l'as.</p>
+          <button style={styles.primaryBtn} onClick={() => alert("Ajoute l'URL du livret quand prêt.")}>Ouvrir le livret</button>
+        </Card>
+        <Card>
+          <h3 style={styles.cardTitle}>Booracle en ligne</h3>
+          <p style={styles.p}>Instrument de pensée : tirer une carte avant/après une séance.</p>
+          <div style={styles.iframeWrap}>
+            <iframe title="Booracle" src={BOORACLE_URL} style={styles.iframe} />
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function RoomGhostBox({ onBack }) {
+  return (
+    <div style={styles.room}>
+      <RoomHeader title="GhostBox" subtitle="Console en ligne (intégration à venir)" onBack={onBack} />
+      <div style={styles.roomContent}>
+        <Card>
+          <h3 style={styles.cardTitle}>Intégration prochaine</h3>
+          <p style={styles.p}>Quand tu auras une GhostBox web ou un lecteur/flux audio, on peut l'intégrer ici (iframe, audio HTML5, ou lien externe).</p>
+          <button style={styles.secondaryBtn} onClick={() => alert("On branchera l'URL de la GhostBox ici.")}>Préparer l'intégration</button>
+        </Card>
+        <Card>
+          <h3 style={styles.cardTitle}>Conseils d'usage</h3>
+          <ul style={styles.list}>
+            <li>Cadre juste & intention claire.</li>
+            <li>Écoute prudente : noter, comparer, recouper.</li>
+            <li>Jamais d'affirmations hâtives ; éthique avant tout.</li>
+          </ul>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function RoomHeader({ title, subtitle, onBack }) {
+  return (
+    <div style={styles.roomHeader}>
+      <button onClick={onBack} style={styles.backBtn} aria-label="Retour">← Retour</button>
+      <div>
+        <h3 style={styles.roomTitle}>{title}</h3>
+        <p style={styles.roomSub}>{subtitle}</p>
+      </div>
+    </div>
+  );
+}
+
+function Card({ children }) {
+  return <div style={styles.card}>{children}</div>;
+}
+
+function NotePad({ storageKey, placeholder }) {
+  const initial = useMemo(() => (typeof window !== "undefined" ? localStorage.getItem(storageKey) || "" : ""), [storageKey]);
+  const [v, setV] = useState(initial);
+  const [saved, setSaved] = useState(false);
+  return (
+    <div>
+      <textarea
+        value={v}
+        onChange={(e) => { setV(e.target.value); setSaved(false); }}
+        placeholder={placeholder}
+        style={styles.textarea}
+      />
+      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+        <button style={styles.primaryBtn} onClick={() => { localStorage.setItem(storageKey, v); setSaved(true); }}>Enregistrer</button>
+        <button style={styles.secondaryBtn} onClick={() => { const s = localStorage.getItem(storageKey) || ""; setV(s); setSaved(false); }}>Recharger</button>
+      </div>
+      {saved && <p style={styles.saved}>Enregistré ✓</p>}
+    </div>
+  );
+}
+
+function BackgroundFX() {
+  return (
+    <div aria-hidden>
+      <div style={styles.bgGradient} />
+      <div style={styles.stars} />
+      <div style={styles.fog} />
+    </div>
+  );
+}
+
+function GlobalStyles() {
+  return (
+    <style>{`
+      @keyframes doorOpen { 0% { transform: perspective(800px) rotateY(0deg); } 100% { transform: perspective(800px) rotateY(-70deg); } }
+      @keyframes glow { 0%,100% { opacity: .15 } 50% { opacity: .35 } }
+      @keyframes twinkle { 0%,100% { opacity:.3 } 50% { opacity:.8 } }
+
+      .door:hover { filter: brightness(1.08); }
+      .beam { animation: glow 2.6s ease-in-out infinite; }
+    `}</style>
+  );
+}
+
+// ——— Styles inline (pour assurer un rendu même sans Tailwind) ————————
+const styles = {
+  app: { minHeight: "100vh", background: "#0b0f1a", color: "#f6f6f6", position: "relative", overflowX: "hidden" },
+  fullscreen: { minHeight: "100vh", display: "grid", placeItems: "center", position: "relative", padding: "48px 16px" },
+  centerCol: { display: "flex", flexDirection: "column", alignItems: "center", gap: 12, textAlign: "center" },
+  title: { fontFamily: "serif", fontSize: 32, letterSpacing: 1, textShadow: "0 1px 0 #000" },
+  subtitle: { opacity: 0.8, maxWidth: 700 },
+  hint: { fontSize: 12, opacity: 0.6, marginTop: 10 },
+  doorWrap: { position: "relative", width: 260, height: 420, marginTop: 12, cursor: "pointer" },
+  doorShadow: { position: "absolute", inset: -12, borderRadius: 18, background: "rgba(255,255,255,0.05)", filter: "blur(6px)" },
+  door: {
+    position: "absolute", inset: 0, borderRadius: 14,
+    background:
+      "linear-gradient(180deg, #3b2d1f 0%, #2e2419 40%, #251d14 100%),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 24px)",
+    border: "1px solid rgba(255,255,255,0.18)",
+    boxShadow: "inset 0 0 0 1px rgba(0,0,0,.8), 0 30px 80px rgba(0,0,0,.6)",
+    display: "grid", placeItems: "center",
+    transformOrigin: "left center",
+    transition: "transform .8s cubic-bezier(.2,.7,.1,1)",
+  },
+  doorKnob: { position: "absolute", right: 24, top: "50%", width: 16, height: 16, borderRadius: 999,
+    background: "radial-gradient(circle at 30% 30%, #e0c16d, #8a6b2a)", boxShadow: "0 0 6px rgba(255,220,120,.6)" },
+  doorSign: { position: "absolute", top: 18, left: "50%", transform: "translateX(-50%)", padding: "4px 10px",
+    borderRadius: 8, fontFamily: "serif", letterSpacing: 2, fontSize: 14,
+    background: "rgba(0,0,0,.35)", border: "1px solid rgba(255,255,255,.25)" },
+  lightBeam: { position: "absolute", left: 0, top: 0, bottom: 0, width: 24,
+    background: "linear-gradient(90deg, rgba(255,238,170,.45), rgba(255,238,170,0))", filter: "blur(4px)" },
+
+  hall: { minHeight: "100vh", padding: "64px 16px", maxWidth: 1200, margin: "0 auto", position: "relative" },
+  hallHeader: { textAlign: "center", marginBottom: 24 },
+  hallTitle: { fontFamily: "serif", fontSize: 28 },
+  hallSub: { opacity: .8 },
+  doorsGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 20, marginTop: 24 },
+  miniDoorBtn: { background: "transparent", border: "none", textAlign: "center", cursor: "pointer" },
+  miniDoorBody: { position: "relative", height: 240, borderRadius: 12, border: "1px solid rgba(255,255,255,.15)",
+    background:
+      "linear-gradient(180deg, #3b2d1f 0%, #2e2419 40%, #251d14 100%),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 22px)",
+    boxShadow: "inset 0 0 0 1px rgba(0,0,0,.8), 0 20px 50px rgba(0,0,0,.4)",
+    transition: "transform .35s ease, filter .35s ease" },
+  miniDoorTop: { position: "absolute", top: 12, left: 0, right: 0, display: "grid", placeItems: "center" },
+  miniDoorIcon: { fontSize: 28 },
+  miniDoorPlate: { position: "absolute", bottom: 12, left: "50%", transform: "translateX(-50%)", padding: "4px 10px",
+    borderRadius: 8, border: "1px solid rgba(255,255,255,.25)", background: "rgba(0,0,0,.35)", fontFamily: "serif", letterSpacing: 1 },
+  miniDoorCaption: { marginTop: 10, opacity: .85 },
+
+  room: { marginTop: 16 },
+  roomHeader: { display: "flex", alignItems: "center", gap: 12, marginBottom: 16 },
+  backBtn: { background: "rgba(255,255,255,.1)", border: "1px solid rgba(255,255,255,.2)", color: "#fff", padding: "8px 12px", borderRadius: 10, cursor: "pointer" },
+  roomTitle: { fontFamily: "serif", fontSize: 24 },
+  roomSub: { opacity: .8 },
+  roomContent: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 16 },
+  card: { border: "1px solid rgba(255,255,255,.15)", background: "rgba(255,255,255,.05)", borderRadius: 14, padding: 16, boxShadow: "0 10px 30px rgba(0,0,0,.35)" },
+  cardTitle: { fontFamily: "serif", fontSize: 18, margin: "0 0 8px" },
+  p: { opacity: .85, lineHeight: 1.5 },
+  list: { margin: 0, paddingLeft: 18, lineHeight: 1.6 },
+  textarea: { width: "100%", minHeight: 140, background: "rgba(0,0,0,.35)", color: "#fff", border: "1px solid rgba(255,255,255,.15)", borderRadius: 10, padding: 10 },
+  primaryBtn: { background: "#fff", color: "#111827", border: "1px solid rgba(255,255,255,.2)", padding: "8px 12px", borderRadius: 10, cursor: "pointer", fontWeight: 600 },
+  secondaryBtn: { background: "transparent", color: "#fff", border: "1px solid rgba(255,255,255,.35)", padding: "8px 12px", borderRadius: 10, cursor: "pointer" },
+  saved: { fontSize: 12, color: "#86efac", marginTop: 6 },
+
+  bgGradient: { position: "fixed", inset: 0, zIndex: -3,
+    background: "radial-gradient(1200px 600px at 50% -10%, rgba(99,102,241,.25), transparent),
+                radial-gradient(1000px 700px at 120% 10%, rgba(236,72,153,.12), transparent),
+                linear-gradient(180deg, #0b0f1a 10%, #0b0f1a)" },
+  stars: { position: "fixed", inset: 0, zIndex: -2, opacity: .35, backgroundImage:
+    "radial-gradient(1px 1px at 12% 18%, #ffffff, transparent),
+     radial-gradient(1px 1px at 72% 8%, #ffffff, transparent),
+     radial-gradient(1px 1px at 22% 78%, #ffffff, transparent),
+     radial-gradient(1px 1px at 88% 66%, #ffffff, transparent)", backgroundRepeat: "no-repeat", animation: "twinkle 6s ease-in-out infinite" },
+  fog: { position: "fixed", inset: 0, zIndex: -1, pointerEvents: "none", background:
+    "radial-gradient(60% 30% at 50% 10%, rgba(255,255,255,.08), transparent),
+     radial-gradient(40% 20% at 30% 80%, rgba(255,255,255,.06), transparent)" },
+};
