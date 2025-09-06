@@ -7,7 +7,8 @@ const BOORACLE_URL = "https://booracle.example.com"; // ← à remplacer quand t
 
 // Effets sonores (dépose tes mp3/ogg dans /public)
 const DOOR_CREAK_URL = "/door-creak.mp3"; // grincement de porte
-const HALL_CHIME_URL = "/hall-chimes.mp3";  // léger carillon en boucle
+const HALL_CHIME_URL = "/hall-chimes.mp3";  // carillon d'accueil (lecture unique)
+const BACKGROUND_MUSIC_URL = "/bg-music.mp3";   // musique de fond après le carillon
 
 export default function Site() {
   const [entered, setEntered] = useState(false);
@@ -17,16 +18,29 @@ export default function Site() {
   // Précharger les sons côté client
   const [creak, setCreak] = useState(null);
   const [chime, setChime] = useState(null);
+  const [bgm, setBgm] = useState(null);
 
   React.useEffect(() => {
     if (typeof window === "undefined") return;
     const c = new Audio(DOOR_CREAK_URL);
     const h = new Audio(HALL_CHIME_URL);
+    const b = new Audio(BACKGROUND_MUSIC_URL);
     c.volume = 0.6; // grincement
     h.volume = 0.25; // carillon doux
-    h.loop = true;
+    h.loop = false;  // lecture unique
+    b.volume = 0.2;  // musique de fond discrète
+    b.loop = true;
+    // Quand le carillon se termine, lancer la musique de fond si pas muet
+    h.addEventListener("ended", () => {
+      if (!document.hidden) {
+        try { !muted && b.play(); } catch {}
+      }
+    });
     setCreak(c);
     setChime(h);
+    setBgm(b);
+
+    return () => { try { h.pause(); b.pause(); } catch {} };
   }, []);
 
   const handleEnter = () => {
@@ -43,11 +57,25 @@ export default function Site() {
       try { chime.currentTime = 0; chime.play(); } catch {}
     } else {
       try { chime.pause(); } catch {}
+      try { bgm && bgm.pause(); } catch {}
     }
     return () => { try { chime.pause(); } catch {} };
-  }, [entered, chime, muted]);
+  }, [entered, chime, muted, bgm]);
 
-  const toggleMute = () => setMuted((m) => !m);
+  const toggleMute = () => {
+    setMuted((m) => {
+      const next = !m;
+      try {
+        if (next) { // on coupe le son
+          chime && chime.pause();
+          bgm && bgm.pause();
+        } else { // on réactive : si le carillon est déjà passé, relancer la musique de fond
+          if (entered && bgm) bgm.play().catch(() => {});
+        }
+      } catch {}
+      return next;
+    });
+  };
 
   return (
     <div style={styles.app}>
@@ -134,7 +162,28 @@ function Landing({ onEnter }) {
 
 // ——————————————————————————————————————————————
 // Hall — Choix des pièces
-function Hall({ room, setRoom }) {({ room, setRoom }) {
+function Hall({ room, setRoom }) {
+  // Quand une pièce est choisie, on n'affiche QUE la pièce (pour éviter les superpositions)
+  if (room === "labo") return <RoomLabo onBack={() => setRoom(null)} />;
+  if (room === "etude") return <RoomEtude onBack={() => setRoom(null)} />;
+  if (room === "ghostbox") return <RoomGhostBox onBack={() => setRoom(null)} />;
+
+  // Sinon, on affiche le Hall seul
+  return (
+    <section style={{ ...styles.hall, ...bg("/hall.jpg") }} aria-label="Hall — Choisir une pièce">
+      <div style={styles.bgOverlay} />
+      <header style={styles.hallHeader}>
+        <h2 style={styles.hallTitle}>Hall du Labo</h2>
+        <p style={styles.hallSub}>Choisis une porte pour continuer</p>
+      </header>
+      <div style={styles.doorsGrid}>
+        <MiniDoor title="Le Labo" subtitle="TCI & enregistrements" icon="🎙️" onClick={() => setRoom("labo")} />
+        <MiniDoor title="Salle d'étude" subtitle="Bibliothèque, Livret, Booracle" icon="📚" onClick={() => setRoom("etude")} />
+        <MiniDoor title="GhostBox" subtitle="Console en ligne" icon="📻" onClick={() => setRoom("ghostbox")} />
+      </div>
+    </section>
+  );
+}) {
   return (
     <section style={{ ...styles.hall, ...bg("/lab.jpg") }} aria-label="Hall — Choisir une pièce">
       <div style={styles.bgOverlay} />
