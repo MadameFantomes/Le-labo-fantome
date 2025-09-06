@@ -190,6 +190,7 @@ function Hall({ room, setRoom }) {
     </section>
   );
 }
+
 ) {
   return (
     <section style={{ ...styles.hall, ...bg("/lab.jpg") }} aria-label="Hall — Choisir une pièce">
