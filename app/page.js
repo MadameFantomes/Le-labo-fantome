@@ -8,9 +8,9 @@ const DOOR_CREAK_URL = "/door-creak.mp3";
 const HALL_CHIME_URL = "/hall-chimes.mp3";
 const BACKGROUND_MUSIC_URL = "/bg-music.mp3";
 
-/* Taille porte (corrigée + plus petite par défaut) */
-const DOOR_MAX_WIDTH = 400;  // largeur max de la porte (px)
-const DOOR_MIN_WIDTH = 200;  // largeur min sur mobile (px)
+/* Porte : taille plus petite par défaut */
+const DOOR_MAX_WIDTH = 320;  // largeur max (px) — réduit
+const DOOR_MIN_WIDTH = 180;  // largeur min (px)
 
 export default function Site() {
   const [entered, setEntered] = useState(false);
@@ -31,7 +31,7 @@ export default function Site() {
 
     c.volume = 0.6;
     h.volume = 0.25; h.loop = false;
-    b.volume = 0.2;  b.loop = true;
+    b.volume = 0.18; b.loop = true;
 
     const onEnded = () => {
       setChimeEnded(true);
@@ -87,12 +87,12 @@ export default function Site() {
 }
 
 /* =========================
-   Landing : fond pierres + porte PNG centrée & collée en bas
+   Landing : mur pierres + porte centrée, bas aligné sur bas d’écran
    ========================= */
 function Landing({ onEnter }) {
   const [opened, setOpened] = useState(false);
-  const [ratio, setRatio] = useState(560 / 360); // mis à jour au chargement
-  const [width, setWidth] = useState(300);
+  const [ratio, setRatio] = useState(560 / 360); // mis à jour au chargement de l'image
+  const [width, setWidth] = useState(240);
 
   const clamp = (n, min, max) => Math.max(min, Math.min(n, max));
 
@@ -101,13 +101,13 @@ function Landing({ onEnter }) {
       const vw = typeof window !== "undefined" ? window.innerWidth : 1024;
       const vh = typeof window !== "undefined" ? window.innerHeight : 768;
 
-      // on réserve une bande en haut pour le titre/sous-titre
-      const reservedTop = clamp(vh * 0.30, 130, 240);
+      // espace réservé pour le titre/sous-titre en haut
+      const reservedTop = clamp(vh * 0.28, 110, 200);
 
-      // contraintes largeur/hauteur pour que la porte rentre toujours
-      const maxWidthByVW = vw * 0.40;                 // ~40% de la largeur écran
-      const availableHeight = Math.max(0, vh - reservedTop);
-      const maxDoorHeight = availableHeight * 0.92;   // marges bas/haut
+      // contraintes de taille : elle doit tenir en largeur ET hauteur
+      const maxWidthByVW = vw * 0.28;                 // ~28% largeur écran (porte plus petite)
+      const availableHeight = Math.max(0, vh - reservedTop - 8);
+      const maxDoorHeight = availableHeight * 0.86;   // marge visuelle
       const widthFromHeight = maxDoorHeight / ratio;
 
       const w = Math.min(maxWidthByVW, widthFromHeight);
@@ -139,13 +139,23 @@ function Landing({ onEnter }) {
         <p style={styles.subtitle}>Une porte s'entrouvre entre visible et invisible…</p>
       </div>
 
+      {/* Indication : bien lisible, juste au-dessus de la porte */}
+      <p
+        style={{
+          ...styles.hintFloating,
+          bottom: height + 20, // placé juste au-dessus du haut de la porte
+        }}
+      >
+        Cliquer la porte pour entrer
+      </p>
+
       {/* Porte : centrée horizontalement, collée en bas */}
       <div
         style={{
           position: "absolute",
           left: "50%",
           transform: "translateX(-50%)",
-          bottom: 0,    // aligne le bas de la porte avec le bas de l'écran/mur
+          bottom: 0,    // bas de la porte = bas de l'écran
           width,
           height,
         }}
@@ -183,19 +193,16 @@ function Landing({ onEnter }) {
             left: -2,
             top: 0,
             bottom: 0,
-            width: 28,
+            width: 24,
             background:
-              "linear-gradient(90deg, rgba(255,238,170,.55), rgba(255,238,170,0))",
+              "linear-gradient(90deg, rgba(255,238,170,.50), rgba(255,238,170,0))",
             filter: "blur(8px)",
-            opacity: 0.85,
+            opacity: 0.8,
             pointerEvents: "none",
           }}
           aria-hidden
         />
       </div>
-
-      {/* Astuce (au-dessus du bord, ne gêne pas la porte) */}
-      <p style={styles.hintBottom}>Cliquer la porte pour entrer</p>
     </section>
   );
 }
@@ -387,17 +394,23 @@ const styles = {
     paddingTop: 24,
   },
   title: { fontFamily: "serif", fontSize: 28, letterSpacing: 1, textShadow: "0 1px 0 #000" },
-  subtitle: { opacity: 0.9, maxWidth: 720, padding: "0 12px" },
-  hintBottom: {
+  subtitle: { opacity: 0.95, maxWidth: 720, padding: "0 12px" },
+
+  /* Indication “cliquer pour entrer” bien lisible, centrée */
+  hintFloating: {
     position: "absolute",
     left: "50%",
     transform: "translateX(-50%)",
-    bottom: 64,
-    fontSize: 12,
-    opacity: 0.75,
-    margin: 0,
-    textAlign: "center",
+    fontSize: 16,
+    lineHeight: 1.2,
+    color: "#f7f7f7",
+    background: "rgba(0,0,0,.45)",
+    border: "1px solid rgba(255,255,255,.25)",
+    borderRadius: 10,
+    padding: "8px 12px",
     zIndex: 1,
+    textShadow: "0 1px 0 rgba(0,0,0,.5)",
+    whiteSpace: "nowrap",
   },
 
   /* Hall & Rooms */
