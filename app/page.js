@@ -91,28 +91,26 @@ export default function Site() {
    ========================= */
 function Landing({ onEnter }) {
   const [opened, setOpened] = useState(false);
-  const [ratio, setRatio] = useState(560 / 360); // sera mis à jour au onLoad
+  const [ratio, setRatio] = useState(560 / 360); // mis à jour au onLoad
   const [width, setWidth] = useState(280);
 
   const clamp = (n, min, max) => Math.max(min, Math.min(n, max));
 
-  // Calcule une largeur qui rentre dans l'écran (largeur ET hauteur) puis centre
+  // Calcule une largeur qui tient dans l'écran (largeur ET hauteur)
   React.useEffect(() => {
     const compute = () => {
       const vw = typeof window !== "undefined" ? window.innerWidth : 1024;
       const vh = typeof window !== "undefined" ? window.innerHeight : 768;
 
-      // On réserve un peu d'espace vertical pour le titre + le texte d'aide
-      const reservedTop = clamp(vh * 0.20, 100, 180);
-      const reservedBottom = clamp(vh * 0.12, 60, 120);
+      const reservedTop = clamp(vh * 0.22, 90, 160);
+      const reservedBottom = clamp(vh * 0.14, 60, 120);
 
-      // contraintes
-      const byWidth = vw * 0.34;                                // 34% largeur écran (look “plus petit”)
-      const byHeight = (vh - reservedTop - reservedBottom) * 0.98; // presque tout l'espace dispo
+      const byWidth = vw * 0.32;                                   // porte plus petite et centrée
+      const byHeight = (vh - reservedTop - reservedBottom) * 0.98;  // contrainte hauteur
       const widthFromHeight = byHeight / ratio;
 
       const w = Math.min(byWidth, widthFromHeight);
-      setWidth(Math.round(clamp(w, DOOR_MIN_WIDTH, DOOR_MAX_WIDTH)));
+      setWidth(Math.round(clamp(w, 200, 420))); // bornes sûres
     };
     compute();
     window.addEventListener("resize", compute);
@@ -128,27 +126,80 @@ function Landing({ onEnter }) {
   };
 
   return (
-    <section style={styles.fullscreen} aria-label="Accueil — Porte du Labo Fantôme">
+    <section
+      style={{
+        minHeight: "100vh",
+        position: "relative",
+        overflow: "hidden",
+        display: "grid",
+        placeItems: "center", // ← centre TOUT le bloc au milieu
+        textAlign: "center",
+        padding: "24px 12px",
+      }}
+      aria-label="Accueil — Porte du Labo Fantôme"
+    >
       {/* Fond mur + voile */}
-      <div style={{ ...styles.bgImage, backgroundImage: 'url(/door-wall.jpg)' }} aria-hidden />
-      <div style={styles.bgOverlay} aria-hidden />
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage: 'url(/door-wall.jpg)',
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+          zIndex: 0,
+        }}
+        aria-hidden
+      />
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background:
+            "linear-gradient(180deg, rgba(11,15,26,.18), rgba(11,15,26,.55))",
+          zIndex: 0,
+        }}
+        aria-hidden
+      />
 
-      {/* Colonne centrée (titre → porte → hint), comme au début */}
-      <div style={styles.centerCol}>
-        <h1 style={styles.title}>Le Labo Fantôme — École</h1>
+      {/* Contenu centré (titre → porte → hint) */}
+      <div
+        style={{
+          position: "relative",
+          zIndex: 1,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 12,
+          width: "100%",
+          maxWidth: 900,
+        }}
+      >
+        <h1 style={{ fontFamily: "serif", fontSize: 28, margin: 0, textShadow: "0 1px 0 #000" }}>
+          Le Labo Fantôme — École
+        </h1>
 
-        {/* Porte centrée */}
-        <div style={{ width, height, position: "relative", margin: "12px auto 10px" }}>
+        {/* Porte parfaitement centrée */}
+        <div
+          style={{
+            width,
+            height,
+            position: "relative",
+            margin: "8px auto 6px",   // ← centre horizontalement
+          }}
+        >
           <img
             src="/door-sprite.png"
             alt="Porte ancienne"
             onLoad={(e) => {
               const img = e.currentTarget;
-              if (img.naturalWidth) setRatio(img.naturalHeight / img.naturalWidth);
+              if (img.naturalWidth) {
+                setRatio(img.naturalHeight / img.naturalWidth);
+              }
             }}
             style={{
               position: "absolute",
-              inset: 0,
+              inset: 0,               // ← l'image remplit le conteneur centré
               objectFit: "contain",
               transformOrigin: "left center",
               transition: "transform .9s cubic-bezier(.2,.7,.1,1)",
@@ -164,6 +215,7 @@ function Landing({ onEnter }) {
             tabIndex={0}
             aria-label="Entrer dans le Labo"
           />
+
           {/* Lueur optionnelle */}
           <div
             style={{
@@ -182,12 +234,27 @@ function Landing({ onEnter }) {
           />
         </div>
 
-        {/* Aide : lisible et centrée sous la porte */}
-        <p style={styles.hintBig}>Cliquer la porte pour entrer</p>
+        {/* Aide lisible et centrée */}
+        <p
+          style={{
+            fontSize: 16,
+            lineHeight: 1.2,
+            color: "#f7f7f7",
+            background: "rgba(0,0,0,.45)",
+            border: "1px solid rgba(255,255,255,.25)",
+            borderRadius: 10,
+            padding: "8px 12px",
+            textShadow: "0 1px 0 rgba(0,0,0,.5)",
+            margin: 0,
+          }}
+        >
+          Cliquer la porte pour entrer
+        </p>
       </div>
     </section>
   );
 }
+
 
 /* =========================
    Hall (puis les pièces)
