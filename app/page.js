@@ -122,8 +122,7 @@ function Landing({ onEnter }) {
   };
 
   return (
-    <section
-      style={{ ...styles.fullscreen, ...bg("/door-wall.jpg") }} // trompe-l’œil pierres en FOND
+   <section style={{ ...styles.fullscreen, ...bg("/door-wall.jpg") }}>
       aria-label="Accueil — Porte du Labo Fantôme"
     >
       {/* cadre de la porte (seule la porte bouge) */}
