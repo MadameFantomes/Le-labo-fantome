@@ -8,9 +8,9 @@ const DOOR_CREAK_URL = "/door-creak.mp3";
 const HALL_CHIME_URL = "/hall-chimes.mp3";
 const BACKGROUND_MUSIC_URL = "/bg-music.mp3";
 
-/* Porte : taille plus petite par défaut */
-const DOOR_MAX_WIDTH = 320;  // largeur max (px) — réduit
-const DOOR_MIN_WIDTH = 180;  // largeur min (px)
+/* Porte : bornes confortables */
+const DOOR_MAX_WIDTH = 420;  // largeur max porte
+const DOOR_MIN_WIDTH = 200;  // largeur min porte
 
 export default function Site() {
   const [entered, setEntered] = useState(false);
@@ -87,33 +87,33 @@ export default function Site() {
 }
 
 /* =========================
-   Landing : mur pierres + porte centrée, bas aligné sur bas d’écran
+   Landing : mur pierres + porte CENTRÉE (comme au début), 100% visible
    ========================= */
 function Landing({ onEnter }) {
   const [opened, setOpened] = useState(false);
-  const [ratio, setRatio] = useState(560 / 360); // mis à jour au chargement de l'image
-  const [width, setWidth] = useState(240);
+  const [ratio, setRatio] = useState(560 / 360); // sera mis à jour au onLoad
+  const [width, setWidth] = useState(280);
 
   const clamp = (n, min, max) => Math.max(min, Math.min(n, max));
 
+  // Calcule une largeur qui rentre dans l'écran (largeur ET hauteur) puis centre
   React.useEffect(() => {
     const compute = () => {
       const vw = typeof window !== "undefined" ? window.innerWidth : 1024;
       const vh = typeof window !== "undefined" ? window.innerHeight : 768;
 
-      // espace réservé pour le titre/sous-titre en haut
-      const reservedTop = clamp(vh * 0.28, 110, 200);
+      // On réserve un peu d'espace vertical pour le titre + le texte d'aide
+      const reservedTop = clamp(vh * 0.20, 100, 180);
+      const reservedBottom = clamp(vh * 0.12, 60, 120);
 
-      // contraintes de taille : elle doit tenir en largeur ET hauteur
-      const maxWidthByVW = vw * 0.28;                 // ~28% largeur écran (porte plus petite)
-      const availableHeight = Math.max(0, vh - reservedTop - 8);
-      const maxDoorHeight = availableHeight * 0.86;   // marge visuelle
-      const widthFromHeight = maxDoorHeight / ratio;
+      // contraintes
+      const byWidth = vw * 0.34;                                // 34% largeur écran (look “plus petit”)
+      const byHeight = (vh - reservedTop - reservedBottom) * 0.98; // presque tout l'espace dispo
+      const widthFromHeight = byHeight / ratio;
 
-      const w = Math.min(maxWidthByVW, widthFromHeight);
+      const w = Math.min(byWidth, widthFromHeight);
       setWidth(Math.round(clamp(w, DOOR_MIN_WIDTH, DOOR_MAX_WIDTH)));
     };
-
     compute();
     window.addEventListener("resize", compute);
     return () => window.removeEventListener("resize", compute);
@@ -133,75 +133,57 @@ function Landing({ onEnter }) {
       <div style={{ ...styles.bgImage, backgroundImage: 'url(/door-wall.jpg)' }} aria-hidden />
       <div style={styles.bgOverlay} aria-hidden />
 
-      {/* Titres en haut */}
-      <div style={styles.centerTop}>
+      {/* Colonne centrée (titre → porte → hint), comme au début */}
+      <div style={styles.centerCol}>
         <h1 style={styles.title}>Le Labo Fantôme — École</h1>
-        <p style={styles.subtitle}>Une porte s'entrouvre entre visible et invisible…</p>
-      </div>
 
-      {/* Indication : bien lisible, juste au-dessus de la porte */}
-      <p
-        style={{
-          ...styles.hintFloating,
-          bottom: height + 20, // placé juste au-dessus du haut de la porte
-        }}
-      >
-        Cliquer la porte pour entrer
-      </p>
+        {/* Porte centrée */}
+        <div style={{ width, height, position: "relative", margin: "12px auto 10px" }}>
+          <img
+            src="/door-sprite.png"
+            alt="Porte ancienne"
+            onLoad={(e) => {
+              const img = e.currentTarget;
+              if (img.naturalWidth) setRatio(img.naturalHeight / img.naturalWidth);
+            }}
+            style={{
+              position: "absolute",
+              inset: 0,
+              objectFit: "contain",
+              transformOrigin: "left center",
+              transition: "transform .9s cubic-bezier(.2,.7,.1,1)",
+              transform: opened
+                ? "perspective(1100px) rotateY(-72deg)"
+                : "perspective(1100px) rotateY(0deg)",
+              cursor: "pointer",
+              filter: "drop-shadow(0 18px 40px rgba(0,0,0,.45))",
+            }}
+            onClick={handleClick}
+            onKeyDown={(e) => e.key === "Enter" && handleClick()}
+            role="button"
+            tabIndex={0}
+            aria-label="Entrer dans le Labo"
+          />
+          {/* Lueur optionnelle */}
+          <div
+            style={{
+              position: "absolute",
+              left: -2,
+              top: 0,
+              bottom: 0,
+              width: 24,
+              background:
+                "linear-gradient(90deg, rgba(255,238,170,.50), rgba(255,238,170,0))",
+              filter: "blur(8px)",
+              opacity: 0.8,
+              pointerEvents: "none",
+            }}
+            aria-hidden
+          />
+        </div>
 
-      {/* Porte : centrée horizontalement, collée en bas */}
-      <div
-        style={{
-          position: "absolute",
-          left: "50%",
-          transform: "translateX(-50%)",
-          bottom: 0,    // bas de la porte = bas de l'écran
-          width,
-          height,
-        }}
-      >
-        <img
-          src="/door-sprite.png"
-          alt="Porte ancienne"
-          onLoad={(e) => {
-            const img = e.currentTarget;
-            if (img.naturalWidth) setRatio(img.naturalHeight / img.naturalWidth);
-          }}
-          style={{
-            position: "absolute",
-            inset: 0,
-            objectFit: "contain",
-            transformOrigin: "left center",
-            transition: "transform .9s cubic-bezier(.2,.7,.1,1)",
-            transform: opened
-              ? "perspective(1100px) rotateY(-72deg)"
-              : "perspective(1100px) rotateY(0deg)",
-            cursor: "pointer",
-            filter: "drop-shadow(0 18px 40px rgba(0,0,0,.45))",
-          }}
-          onClick={handleClick}
-          onKeyDown={(e) => e.key === "Enter" && handleClick()}
-          role="button"
-          tabIndex={0}
-          aria-label="Entrer dans le Labo"
-        />
-
-        {/* Lueur optionnelle */}
-        <div
-          style={{
-            position: "absolute",
-            left: -2,
-            top: 0,
-            bottom: 0,
-            width: 24,
-            background:
-              "linear-gradient(90deg, rgba(255,238,170,.50), rgba(255,238,170,0))",
-            filter: "blur(8px)",
-            opacity: 0.8,
-            pointerEvents: "none",
-          }}
-          aria-hidden
-        />
+        {/* Aide : lisible et centrée sous la porte */}
+        <p style={styles.hintBig}>Cliquer la porte pour entrer</p>
       </div>
     </section>
   );
@@ -366,6 +348,10 @@ const styles = {
     minHeight: "100vh",
     position: "relative",
     overflow: "hidden",
+    display: "grid",
+    placeItems: "center", // ← centre le bloc (titre+porte+hint) verticalement & horizontalement
+    textAlign: "center",
+    padding: "24px 12px",
   },
 
   /* Fond + voile */
@@ -384,23 +370,19 @@ const styles = {
     zIndex: 0,
   },
 
-  /* Titres en haut, centrés */
-  centerTop: {
+  /* Colonne centrée (comme au début) */
+  centerCol: {
     position: "relative",
     zIndex: 1,
-    display: "grid",
-    placeItems: "center",
-    textAlign: "center",
-    paddingTop: 24,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 10,
   },
-  title: { fontFamily: "serif", fontSize: 28, letterSpacing: 1, textShadow: "0 1px 0 #000" },
-  subtitle: { opacity: 0.95, maxWidth: 720, padding: "0 12px" },
+  title: { fontFamily: "serif", fontSize: 28, letterSpacing: 1, textShadow: "0 1px 0 #000", margin: 0 },
 
-  /* Indication “cliquer pour entrer” bien lisible, centrée */
-  hintFloating: {
-    position: "absolute",
-    left: "50%",
-    transform: "translateX(-50%)",
+  /* Aide lisible sous la porte */
+  hintBig: {
     fontSize: 16,
     lineHeight: 1.2,
     color: "#f7f7f7",
@@ -408,9 +390,8 @@ const styles = {
     border: "1px solid rgba(255,255,255,.25)",
     borderRadius: 10,
     padding: "8px 12px",
-    zIndex: 1,
     textShadow: "0 1px 0 rgba(0,0,0,.5)",
-    whiteSpace: "nowrap",
+    marginTop: 10,
   },
 
   /* Hall & Rooms */
