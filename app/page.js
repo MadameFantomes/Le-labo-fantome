@@ -8,8 +8,8 @@ const DOOR_CREAK_URL = "/door-creak.mp3";
 const HALL_CHIME_URL = "/hall-chimes.mp3";
 const BACKGROUND_MUSIC_URL = "/bg-music.mp3";
 
-const DOOR_MAX_WIDTH = 480;  // largeur max de la porte
-const DOOR_MIN_WIDTH = 260;  // largeur min sur mobile
+const DOOR_MAX_WIDTH = 520;  // largeur max de la porte
+const DOOR_MIN_WIDTH = 240;  // largeur min sur mobile
 
 export default function Site() {
   const [entered, setEntered] = useState(false);
@@ -86,23 +86,35 @@ export default function Site() {
 }
 
 /* =========================
-   Landing : fond pierres + porte PNG centrée
+   Landing : fond pierres + porte PNG centrée et entièrement visible
    ========================= */
 function Landing({ onEnter }) {
   const [opened, setOpened] = useState(false);
-  const [ratio, setRatio] = useState(560/360); // mis à jour au chargement
+  const [ratio, setRatio] = useState(560 / 360); // mis à jour au chargement
   const [width, setWidth] = useState(360);
+
+  const clamp = (n, min, max) => Math.max(min, Math.min(n, max));
 
   React.useEffect(() => {
     const compute = () => {
       const vw = typeof window !== "undefined" ? window.innerWidth : 1024;
-      const w = Math.min(Math.max(vw * 0.38, DOOR_MIN_WIDTH), DOOR_MAX_WIDTH);
-      setWidth(Math.round(w));
+      const vh = typeof window !== "undefined" ? window.innerHeight : 768;
+
+      // on réserve un peu de place au-dessus et en dessous pour les textes
+      const reserved = clamp(vh * 0.28, 140, 240);
+
+      // contraintes pour que la porte rentre dans l'écran
+      const byWidth = vw * 0.5;                  // max 50% de la largeur
+      const byHeight = (vh - reserved) * 0.92;   // 92% de la hauteur dispo
+      const widthFromHeight = byHeight / ratio;
+
+      const w = Math.min(byWidth, widthFromHeight);
+      setWidth(Math.round(clamp(w, DOOR_MIN_WIDTH, DOOR_MAX_WIDTH)));
     };
     compute();
     window.addEventListener("resize", compute);
     return () => window.removeEventListener("resize", compute);
-  }, []);
+  }, [ratio]);
 
   const height = Math.round(width * ratio);
 
@@ -114,23 +126,16 @@ function Landing({ onEnter }) {
 
   return (
     <section style={styles.fullscreen} aria-label="Accueil — Porte du Labo Fantôme">
-      {/* BACKGROUND GARANTI : plein écran en arrière-plan */}
-      <div
-        style={{
-          ...styles.bgImage,
-          backgroundImage: 'url(/door-wall.jpg)', // ← mets .png si besoin
-        }}
-        aria-hidden
-      />
-      {/* Léger voile pour la lisibilité du texte */}
+      {/* Fond mur de pierres + voile de lisibilité */}
+      <div style={{ ...styles.bgImage, backgroundImage: 'url(/door-wall.jpg)' }} aria-hidden />
       <div style={styles.bgOverlay} aria-hidden />
 
       <div style={styles.centerCol}>
         <h1 style={styles.title}>Le Labo Fantôme — École</h1>
         <p style={styles.subtitle}>Une porte s'entrouvre entre visible et invisible…</p>
 
-        {/* Cadre de la porte (centrée) */}
-        <div style={{ width, height, position: "relative" }}>
+        {/* Porte centrée et redimensionnée */}
+        <div style={{ width, height, position: "relative", margin: "0 auto" }}>
           <img
             src="/door-sprite.png"
             alt="Porte ancienne"
@@ -157,11 +162,21 @@ function Landing({ onEnter }) {
             aria-label="Entrer dans le Labo"
           />
           {/* Lueur optionnelle */}
-          <div style={{
-            position:"absolute", left:-2, top:0, bottom:0, width:28,
-            background:"linear-gradient(90deg, rgba(255,238,170,.55), rgba(255,238,170,0))",
-            filter:"blur(8px)", opacity:.85, pointerEvents:"none"
-          }} />
+          <div
+            style={{
+              position: "absolute",
+              left: -2,
+              top: 0,
+              bottom: 0,
+              width: 28,
+              background:
+                "linear-gradient(90deg, rgba(255,238,170,.55), rgba(255,238,170,0))",
+              filter: "blur(8px)",
+              opacity: 0.85,
+              pointerEvents: "none",
+            }}
+            aria-hidden
+          />
         </div>
 
         <p style={styles.hint}>Cliquer la porte pour entrer</p>
