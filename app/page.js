@@ -8,8 +8,9 @@ const DOOR_CREAK_URL = "/door-creak.mp3";
 const HALL_CHIME_URL = "/hall-chimes.mp3";
 const BACKGROUND_MUSIC_URL = "/bg-music.mp3";
 
-const DOOR_MAX_WIDTH = 520;  // largeur max de la porte
-const DOOR_MIN_WIDTH = 240;  // largeur min sur mobile
+/* Taille porte (corrigée + plus petite par défaut) */
+const DOOR_MAX_WIDTH = 400;  // largeur max de la porte (px)
+const DOOR_MIN_WIDTH = 200;  // largeur min sur mobile (px)
 
 export default function Site() {
   const [entered, setEntered] = useState(false);
@@ -86,12 +87,12 @@ export default function Site() {
 }
 
 /* =========================
-   Landing : fond pierres + porte PNG centrée et entièrement visible
+   Landing : fond pierres + porte PNG centrée & collée en bas
    ========================= */
 function Landing({ onEnter }) {
   const [opened, setOpened] = useState(false);
   const [ratio, setRatio] = useState(560 / 360); // mis à jour au chargement
-  const [width, setWidth] = useState(360);
+  const [width, setWidth] = useState(300);
 
   const clamp = (n, min, max) => Math.max(min, Math.min(n, max));
 
@@ -100,17 +101,19 @@ function Landing({ onEnter }) {
       const vw = typeof window !== "undefined" ? window.innerWidth : 1024;
       const vh = typeof window !== "undefined" ? window.innerHeight : 768;
 
-      // on réserve un peu de place au-dessus et en dessous pour les textes
-      const reserved = clamp(vh * 0.28, 140, 240);
+      // on réserve une bande en haut pour le titre/sous-titre
+      const reservedTop = clamp(vh * 0.30, 130, 240);
 
-      // contraintes pour que la porte rentre dans l'écran
-      const byWidth = vw * 0.5;                  // max 50% de la largeur
-      const byHeight = (vh - reserved) * 0.92;   // 92% de la hauteur dispo
-      const widthFromHeight = byHeight / ratio;
+      // contraintes largeur/hauteur pour que la porte rentre toujours
+      const maxWidthByVW = vw * 0.40;                 // ~40% de la largeur écran
+      const availableHeight = Math.max(0, vh - reservedTop);
+      const maxDoorHeight = availableHeight * 0.92;   // marges bas/haut
+      const widthFromHeight = maxDoorHeight / ratio;
 
-      const w = Math.min(byWidth, widthFromHeight);
+      const w = Math.min(maxWidthByVW, widthFromHeight);
       setWidth(Math.round(clamp(w, DOOR_MIN_WIDTH, DOOR_MAX_WIDTH)));
     };
+
     compute();
     window.addEventListener("resize", compute);
     return () => window.removeEventListener("resize", compute);
@@ -126,61 +129,73 @@ function Landing({ onEnter }) {
 
   return (
     <section style={styles.fullscreen} aria-label="Accueil — Porte du Labo Fantôme">
-      {/* Fond mur de pierres + voile de lisibilité */}
+      {/* Fond mur + voile */}
       <div style={{ ...styles.bgImage, backgroundImage: 'url(/door-wall.jpg)' }} aria-hidden />
       <div style={styles.bgOverlay} aria-hidden />
 
-      <div style={styles.centerCol}>
+      {/* Titres en haut */}
+      <div style={styles.centerTop}>
         <h1 style={styles.title}>Le Labo Fantôme — École</h1>
         <p style={styles.subtitle}>Une porte s'entrouvre entre visible et invisible…</p>
-
-        {/* Porte centrée et redimensionnée */}
-        <div style={{ width, height, position: "relative", margin: "0 auto" }}>
-          <img
-            src="/door-sprite.png"
-            alt="Porte ancienne"
-            onLoad={(e) => {
-              const img = e.currentTarget;
-              if (img.naturalWidth) setRatio(img.naturalHeight / img.naturalWidth);
-            }}
-            style={{
-              position: "absolute",
-              inset: 0,
-              objectFit: "contain",
-              transformOrigin: "left center",
-              transition: "transform .9s cubic-bezier(.2,.7,.1,1)",
-              transform: opened
-                ? "perspective(1100px) rotateY(-72deg)"
-                : "perspective(1100px) rotateY(0deg)",
-              cursor: "pointer",
-              filter: "drop-shadow(0 18px 40px rgba(0,0,0,.45))",
-            }}
-            onClick={handleClick}
-            onKeyDown={(e) => e.key === "Enter" && handleClick()}
-            role="button"
-            tabIndex={0}
-            aria-label="Entrer dans le Labo"
-          />
-          {/* Lueur optionnelle */}
-          <div
-            style={{
-              position: "absolute",
-              left: -2,
-              top: 0,
-              bottom: 0,
-              width: 28,
-              background:
-                "linear-gradient(90deg, rgba(255,238,170,.55), rgba(255,238,170,0))",
-              filter: "blur(8px)",
-              opacity: 0.85,
-              pointerEvents: "none",
-            }}
-            aria-hidden
-          />
-        </div>
-
-        <p style={styles.hint}>Cliquer la porte pour entrer</p>
       </div>
+
+      {/* Porte : centrée horizontalement, collée en bas */}
+      <div
+        style={{
+          position: "absolute",
+          left: "50%",
+          transform: "translateX(-50%)",
+          bottom: 0,    // aligne le bas de la porte avec le bas de l'écran/mur
+          width,
+          height,
+        }}
+      >
+        <img
+          src="/door-sprite.png"
+          alt="Porte ancienne"
+          onLoad={(e) => {
+            const img = e.currentTarget;
+            if (img.naturalWidth) setRatio(img.naturalHeight / img.naturalWidth);
+          }}
+          style={{
+            position: "absolute",
+            inset: 0,
+            objectFit: "contain",
+            transformOrigin: "left center",
+            transition: "transform .9s cubic-bezier(.2,.7,.1,1)",
+            transform: opened
+              ? "perspective(1100px) rotateY(-72deg)"
+              : "perspective(1100px) rotateY(0deg)",
+            cursor: "pointer",
+            filter: "drop-shadow(0 18px 40px rgba(0,0,0,.45))",
+          }}
+          onClick={handleClick}
+          onKeyDown={(e) => e.key === "Enter" && handleClick()}
+          role="button"
+          tabIndex={0}
+          aria-label="Entrer dans le Labo"
+        />
+
+        {/* Lueur optionnelle */}
+        <div
+          style={{
+            position: "absolute",
+            left: -2,
+            top: 0,
+            bottom: 0,
+            width: 28,
+            background:
+              "linear-gradient(90deg, rgba(255,238,170,.55), rgba(255,238,170,0))",
+            filter: "blur(8px)",
+            opacity: 0.85,
+            pointerEvents: "none",
+          }}
+          aria-hidden
+        />
+      </div>
+
+      {/* Astuce (au-dessus du bord, ne gêne pas la porte) */}
+      <p style={styles.hintBottom}>Cliquer la porte pour entrer</p>
     </section>
   );
 }
@@ -339,17 +354,14 @@ function bg(url) {
 const styles = {
   app: { minHeight: "100vh", background: "#0b0f1a", color: "#f6f6f6" },
 
+  /* Accueil plein écran */
   fullscreen: {
     minHeight: "100vh",
-    display: "grid",
-    placeItems: "center",
-    textAlign: "center",
-    padding: "48px 16px",
     position: "relative",
     overflow: "hidden",
   },
 
-  // BACKGROUND garanti (plein écran derrière la section)
+  /* Fond + voile */
   bgImage: {
     position: "absolute",
     inset: 0,
@@ -358,20 +370,37 @@ const styles = {
     backgroundRepeat: "no-repeat",
     zIndex: 0,
   },
-  // voile pour lisibilité
   bgOverlay: {
     position: "absolute",
     inset: 0,
-    background: "linear-gradient(180deg, rgba(11,15,26,.25), rgba(11,15,26,.55))",
+    background: "linear-gradient(180deg, rgba(11,15,26,.18), rgba(11,15,26,.55))",
     zIndex: 0,
   },
 
-  centerCol: { display: "flex", flexDirection: "column", alignItems: "center", gap: 12, zIndex: 1 },
-  title: { fontFamily: "serif", fontSize: 32, letterSpacing: 1, textShadow: "0 1px 0 #000" },
-  subtitle: { opacity: 0.9, maxWidth: 700 },
-  hint: { fontSize: 12, opacity: 0.7, marginTop: 10 },
+  /* Titres en haut, centrés */
+  centerTop: {
+    position: "relative",
+    zIndex: 1,
+    display: "grid",
+    placeItems: "center",
+    textAlign: "center",
+    paddingTop: 24,
+  },
+  title: { fontFamily: "serif", fontSize: 28, letterSpacing: 1, textShadow: "0 1px 0 #000" },
+  subtitle: { opacity: 0.9, maxWidth: 720, padding: "0 12px" },
+  hintBottom: {
+    position: "absolute",
+    left: "50%",
+    transform: "translateX(-50%)",
+    bottom: 64,
+    fontSize: 12,
+    opacity: 0.75,
+    margin: 0,
+    textAlign: "center",
+    zIndex: 1,
+  },
 
-  // Hall & Rooms
+  /* Hall & Rooms */
   hall: { minHeight: "100vh", padding: "64px 16px", maxWidth: 1200, margin: "0 auto" },
   hallHeader: { textAlign: "center", marginBottom: 24 },
   hallTitle: { fontFamily: "serif", fontSize: 28 },
@@ -379,7 +408,7 @@ const styles = {
   doorsGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 20, marginTop: 24 },
 
   miniDoorBtn: { background: "transparent", border: "none", textAlign: "center", cursor: "pointer" },
-  miniDoorBody: { position: "relative", height: 240, borderRadius: 12, border: "1px solid rgba(255,255,255,.15)", background: `linear-gradient(180deg, rgba(59,45,31,.9) 0%, rgba(46,36,25,.9) 40%, rgba(37,29,20,.9) 100%), repeating-linear-gradient(90deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 22px)`, boxShadow: "inset 0 0 0 1px rgba(0,0,0,.8), 0 20px 50px rgba(0,0,0,.4)", transition: "transform .35s ease, filter .35s ease" },
+  miniDoorBody: { position: "relative", height: 240, borderRadius: 12, border: "1px solid rgba(255,255,255,.15)", background: "linear-gradient(180deg, rgba(59,45,31,.9) 0%, rgba(46,36,25,.9) 40%, rgba(37,29,20,.9) 100%), repeating-linear-gradient(90deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 22px)", boxShadow: "inset 0 0 0 1px rgba(0,0,0,.8), 0 20px 50px rgba(0,0,0,.4)", transition: "transform .35s ease, filter .35s ease" },
   miniDoorTop: { position: "absolute", top: 12, left: 0, right: 0, display: "grid", placeItems: "center" },
   miniDoorIcon: { fontSize: 28 },
   miniDoorPlate: { position: "absolute", bottom: 12, left: "50%", transform: "translateX(-50%)", padding: "4px 10px", borderRadius: 8, border: "1px solid rgba(255,255,255,.25)", background: "rgba(0,0,0,.35)", fontFamily: "serif", letterSpacing: 1 },
