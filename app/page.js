@@ -2,26 +2,31 @@
 
 import React, { useState, useMemo } from "react";
 
-// URLs externes
+// ——— URLs externes
 const BOORACLE_URL = "https://booracle.example.com";
 
-// Fichiers audio dans /public
+// ——— Fichiers audio (dans /public)
 const DOOR_CREAK_URL = "/door-creak.mp3";
 const HALL_CHIME_URL = "/hall-chimes.mp3";
 const BACKGROUND_MUSIC_URL = "/bg-music.mp3";
+
+// ——— Réglages d’alignement de la porte
+const DOOR_MAX_WIDTH = 480;       // largeur max de la porte (px)
+const DOOR_MIN_WIDTH = 260;       // largeur min sur mobile (px)
+const HINGE_OFFSET_PX = 18;       // distance (px) entre le bord gauche du PNG et l’axe de la charnière
+const DOOR_SHIFT = { x: 0, y: 0 }; // décalage fin de la porte par rapport au fond
 
 export default function Site() {
   const [entered, setEntered] = useState(false);
   const [room, setRoom] = useState(null); // "labo" | "etude" | "ghostbox" | null
   const [muted, setMuted] = useState(false);
 
-  // Audio refs
+  // Audio
   const [creak, setCreak] = useState(null);
   const [chime, setChime] = useState(null);
   const [bgm, setBgm] = useState(null);
   const [chimeEnded, setChimeEnded] = useState(false);
 
-  // Prépare les sons
   React.useEffect(() => {
     if (typeof window === "undefined") return;
     const c = new Audio(DOOR_CREAK_URL);
@@ -39,7 +44,6 @@ export default function Site() {
     h.addEventListener("ended", onEnded);
 
     setCreak(c); setChime(h); setBgm(b);
-
     return () => {
       try { h.removeEventListener("ended", onEnded); } catch {}
       try { h.pause(); } catch {}
@@ -47,12 +51,12 @@ export default function Site() {
     };
   }, [muted]);
 
-  // Entrée = grincement + chime puis musique
   const handleEnter = () => {
     setEntered(true);
     if (creak && !muted) { try { creak.currentTime = 0; creak.play(); } catch {} }
   };
 
+  // Chime (une fois) puis musique de fond
   React.useEffect(() => {
     if (!entered || !chime) return;
     if (muted) { try { chime.pause(); } catch {}; try { bgm && bgm.pause(); } catch {}; return; }
@@ -61,7 +65,7 @@ export default function Site() {
   }, [entered, muted, chime, bgm, chimeEnded]);
 
   const toggleMute = () => {
-    setMuted((m) => {
+    setMuted(m => {
       const next = !m;
       try {
         if (next) { chime && chime.pause(); bgm && bgm.pause(); }
@@ -91,10 +95,25 @@ export default function Site() {
 }
 
 /* =========================
-   Landing : mur fixe + porte PNG (seule la porte pivote)
+   Landing : fond pierres plein écran + porte PNG qui pivote
    ========================= */
 function Landing({ onEnter }) {
   const [opened, setOpened] = useState(false);
+
+  // Taille responsive de la porte (garde le ratio du PNG)
+  const [ratio, setRatio] = useState(560 / 360); // sera recalé au onLoad
+  const [width, setWidth] = useState(360);
+  React.useEffect(() => {
+    const compute = () => {
+      const vw = typeof window !== "undefined" ? window.innerWidth : 1024;
+      const w = Math.min(Math.max(vw * 0.36, DOOR_MIN_WIDTH), DOOR_MAX_WIDTH);
+      setWidth(Math.round(w));
+    };
+    compute();
+    window.addEventListener("resize", compute);
+    return () => window.removeEventListener("resize", compute);
+  }, []);
+  const height = Math.round(width * ratio);
 
   const handleClick = () => {
     if (opened) return;
@@ -103,18 +122,25 @@ function Landing({ onEnter }) {
   };
 
   return (
-    <section style={{ ...styles.fullscreen }} aria-label="Accueil — Porte du Labo Fantôme">
-      {/* Scène : mur (fixe) + porte transparente au-dessus */}
-      <div style={styles.doorScene}>
-        {/* MUR */}
-        <div style={{ ...styles.wall, backgroundImage: 'url(/door-wall.jpg)' }} aria-hidden />
-
-        {/* PORTE PNG (transparente) */}
+    <section
+      style={{ ...styles.fullscreen, ...bg("/door-wall.jpg") }} // trompe-l’œil pierres en FOND
+      aria-label="Accueil — Porte du Labo Fantôme"
+    >
+      {/* cadre de la porte (seule la porte bouge) */}
+      <div style={{ ...styles.doorScene, width, height }}>
+        {/* Porte PNG transparente qui pivote */}
         <img
           src="/door-sprite.png"
           alt="Porte ancienne"
+          onLoad={(e) => {
+            const img = e.currentTarget;
+            if (img.naturalWidth) setRatio(img.naturalHeight / img.naturalWidth);
+          }}
           style={{
             ...styles.doorSprite,
+            left: DOOR_SHIFT.x,
+            top: DOOR_SHIFT.y,
+            transformOrigin: `${HINGE_OFFSET_PX}px center`,
             transform: opened
               ? "perspective(1100px) rotateY(-72deg)"
               : "perspective(1100px) rotateY(0deg)",
@@ -297,7 +323,6 @@ function GlobalStyles() {
   return (
     <style>{`
       @keyframes twinkle { 0%,100% { opacity:.3 } 50% { opacity:.8 } }
-      .door:hover { filter: brightness(1.05); }
       @keyframes lampFlicker {
         0%,19%,21%,23%,25%,54%,56%,100% { opacity: .9; filter: drop-shadow(0 0 18px rgba(255,242,200,.55)); }
         20%,24%,55% { opacity: .6; filter: drop-shadow(0 0 6px rgba(255,242,200,.25)); }
@@ -321,20 +346,33 @@ function bg(url) {
    ========================= */
 const styles = {
   app: { minHeight: "100vh", background: "#0b0f1a", color: "#f6f6f6", position: "relative", overflowX: "hidden" },
+
+  // Accueil en plein écran (le fond pierres est appliqué via bg("/door-wall.jpg"))
   fullscreen: { minHeight: "100vh", display: "grid", placeItems: "center", position: "relative", padding: "48px 16px" },
 
-  // Scène porte (mur fixe + porte PNG)
-  doorScene: { position: "relative", width: 360, height: 560, margin: "0 auto 16px", zIndex: 1 },
-  wall: { position: "absolute", inset: 0, backgroundSize: "cover", backgroundPosition: "center", borderRadius: 16, boxShadow: "0 30px 80px rgba(0,0,0,.6)" },
-  doorSprite: { position: "absolute", inset: 0, objectFit: "contain", transformOrigin: "left center", transition: "transform .9s cubic-bezier(.2,.7,.1,1)", cursor: "pointer", zIndex: 2 },
-  doorLight: { position: "absolute", left: -2, top: 0, bottom: 0, width: 28, background: "linear-gradient(90deg, rgba(255,238,170,.55), rgba(255,238,170,0))", filter: "blur(8px)", opacity: 0.85, pointerEvents: "none", zIndex: 1 },
+  // Scène de la porte (seule la porte bouge)
+  doorScene: { position: "relative", margin: "0 auto 16px", zIndex: 1 },
+  doorSprite: {
+    position: "absolute",
+    inset: 0,
+    objectFit: "contain",
+    transition: "transform .9s cubic-bezier(.2,.7,.1,1)",
+    cursor: "pointer",
+    zIndex: 2,
+  },
+  doorLight: {
+    position: "absolute",
+    left: -2, top: 0, bottom: 0, width: 28,
+    background: "linear-gradient(90deg, rgba(255,238,170,.55), rgba(255,238,170,0))",
+    filter: "blur(8px)", opacity: 0.85, pointerEvents: "none", zIndex: 1,
+  },
 
   centerCol: { display: "flex", flexDirection: "column", alignItems: "center", gap: 12, textAlign: "center", zIndex: 1 },
   title: { fontFamily: "serif", fontSize: 32, letterSpacing: 1, textShadow: "0 1px 0 #000" },
   subtitle: { opacity: 0.9, maxWidth: 700 },
   hint: { fontSize: 12, opacity: 0.7, marginTop: 10 },
 
-  // Overlay réutilisable sur les pièces
+  // Overlay réutilisable pour les pièces
   bgOverlay: { position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(11,15,26,.4), rgba(11,15,26,.65))", backdropFilter: "blur(1px)" },
 
   // Hall & Rooms
