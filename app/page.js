@@ -91,35 +91,6 @@ export default function Site() {
    ========================= */
 function Landing({ onEnter }) {
   const [opened, setOpened] = useState(false);
-  const [ratio, setRatio] = useState(560 / 360); // mis à jour au onLoad
-  const [width, setWidth] = useState(220);
-
-  const clamp = (n, min, max) => Math.max(min, Math.min(n, max));
-
-  // Porte PETITE + CENTRÉE (toujours visible)
-  React.useEffect(() => {
-    const compute = () => {
-      const vw = typeof window !== "undefined" ? window.innerWidth : 1024;
-      const vh = typeof window !== "undefined" ? window.innerHeight : 768;
-
-      // espace réservé pour le titre + le hint
-      const titleBlock = clamp(vh * 0.22, 110, 200);
-      const hintSpace  = 40; // hauteur approximative du hint
-
-      // limites strictes pour réduire la porte
-      const byWidth = vw * 0.24;                     // ~24% de la largeur écran (petite)
-      const byHeight = (vh - titleBlock - hintSpace) * 0.50; // ~50% du reste
-      const widthFromHeight = byHeight / ratio;
-
-      const w = Math.min(byWidth, widthFromHeight);
-      setWidth(Math.round(clamp(w, 180, 300))); // borne min/max
-    };
-    compute();
-    window.addEventListener("resize", compute);
-    return () => window.removeEventListener("resize", compute);
-  }, [ratio]);
-
-  const height = Math.round(width * ratio);
 
   const handleClick = () => {
     if (opened) return;
@@ -133,14 +104,11 @@ function Landing({ onEnter }) {
         minHeight: "100vh",
         position: "relative",
         overflow: "hidden",
-        display: "grid",
-        placeItems: "center",
         textAlign: "center",
-        padding: "24px 12px",
       }}
       aria-label="Accueil — Porte du Labo Fantôme"
     >
-      {/* Fond mur + voile */}
+      {/* Mur de pierres */}
       <div
         style={{
           position: "absolute",
@@ -148,58 +116,90 @@ function Landing({ onEnter }) {
           backgroundImage: 'url(/door-wall.jpg)',
           backgroundSize: "cover",
           backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-          zIndex: 0,
         }}
         aria-hidden
       />
+      {/* Voile sombre */}
       <div
         style={{
           position: "absolute",
           inset: 0,
-          background: "linear-gradient(180deg, rgba(11,15,26,.18), rgba(11,15,26,.55))",
-          zIndex: 0,
+          background:
+            "linear-gradient(180deg, rgba(11,15,26,.20), rgba(11,15,26,.55))",
         }}
         aria-hidden
       />
 
-      {/* Colonne centrée : Titre → Hint → Porte (tous centrés) */}
+      {/* PORTE — centrée, DERRIÈRE le texte, mais cliquable */}
+      <img
+        src="/door-sprite.png"
+        alt="Porte ancienne"
+        onClick={handleClick}
+        onKeyDown={(e) => e.key === "Enter" && handleClick()}
+        role="button"
+        tabIndex={0}
+        style={{
+          position: "absolute",
+          left: "50%",
+          top: "50%",
+          transform: `translate(-50%, -50%) ${opened ? "perspective(1100px) rotateY(-72deg)" : "perspective(1100px) rotateY(0deg)"}`,
+          width: "clamp(160px, 26vw, 320px)", // taille raisonnable, toujours visible
+          height: "auto",
+          zIndex: 1,                 // derrière le texte
+          cursor: "pointer",
+          filter: "drop-shadow(0 18px 40px rgba(0,0,0,.45))",
+          userSelect: "none",
+        }}
+      />
+
+      {/* CONTENU DEVANT (ne bloque pas les clics sur la porte) */}
       <div
         style={{
           position: "relative",
-          zIndex: 1,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 12,
-          width: "100%",
-          maxWidth: 900,
+          zIndex: 2,
+          display: "grid",
+          placeItems: "center",
+          padding: "32px 16px",
+          minHeight: "100vh",
+          pointerEvents: "none", // ← les clics passent à la porte
         }}
       >
-        <h1 style={{ fontFamily: "serif", fontSize: 28, margin: 0, textShadow: "0 1px 0 #000" }}>
-          Le Labo Fantôme — École
-        </h1>
-        <p style={{ opacity: 0.95, maxWidth: 720, padding: "0 12px", margin: 0 }}>
-          Une porte s'entrouvre entre visible et invisible…
-        </p>
+        <div style={{ maxWidth: 900 }}>
+          <h1
+            style={{
+              fontFamily: "serif",
+              fontSize: 28,
+              margin: 0,
+              textShadow: "0 1px 0 #000",
+            }}
+          >
+            Le Labo Fantôme — École
+          </h1>
+          <p style={{ opacity: 0.95, marginTop: 6 }}>
+            Une porte s'entrouvre entre visible et invisible…
+          </p>
 
-        {/* HINT — AU-DESSUS DE LA PORTE */}
-        <p
-          style={{
-            fontSize: 16,
-            lineHeight: 1.2,
-            color: "#f7f7f7",
-            background: "rgba(0,0,0,.45)",
-            border: "1px solid rgba(255,255,255,.25)",
-            borderRadius: 10,
-            padding: "8px 12px",
-            textShadow: "0 1px 0 rgba(0,0,0,.5)",
-            marginTop: 10,
-            marginBottom: 6,
-          }}
-        >
-          Cliquer la porte pour entrer
-        </p>
+          {/* Hint bien visible, centré */}
+          <p
+            style={{
+              display: "inline-block",
+              fontSize: 16,
+              marginTop: 16,
+              color: "#f7f7f7",
+              background: "rgba(0,0,0,.45)",
+              border: "1px solid rgba(255,255,255,.25)",
+              borderRadius: 10,
+              padding: "8px 12px",
+              textShadow: "0 1px 0 rgba(0,0,0,.5)",
+            }}
+          >
+            Cliquer la porte pour entrer
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
 
         {/* PORTE — parfaitement centrée et petite */}
         <div style={{ width, height, position: "relative", margin: "0 auto" }}>
