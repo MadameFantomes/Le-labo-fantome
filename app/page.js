@@ -92,25 +92,27 @@ export default function Site() {
 function Landing({ onEnter }) {
   const [opened, setOpened] = useState(false);
   const [ratio, setRatio] = useState(560 / 360); // mis à jour au onLoad
-  const [width, setWidth] = useState(280);
+  const [width, setWidth] = useState(220);
 
   const clamp = (n, min, max) => Math.max(min, Math.min(n, max));
 
-  // Calcule une largeur qui tient dans l'écran (largeur ET hauteur)
+  // Porte PETITE + CENTRÉE (toujours visible)
   React.useEffect(() => {
     const compute = () => {
       const vw = typeof window !== "undefined" ? window.innerWidth : 1024;
       const vh = typeof window !== "undefined" ? window.innerHeight : 768;
 
-      const reservedTop = clamp(vh * 0.22, 90, 160);
-      const reservedBottom = clamp(vh * 0.14, 60, 120);
+      // espace réservé pour le titre + le hint
+      const titleBlock = clamp(vh * 0.22, 110, 200);
+      const hintSpace  = 40; // hauteur approximative du hint
 
-      const byWidth = vw * 0.32;                                   // porte plus petite et centrée
-      const byHeight = (vh - reservedTop - reservedBottom) * 0.98;  // contrainte hauteur
+      // limites strictes pour réduire la porte
+      const byWidth = vw * 0.24;                     // ~24% de la largeur écran (petite)
+      const byHeight = (vh - titleBlock - hintSpace) * 0.50; // ~50% du reste
       const widthFromHeight = byHeight / ratio;
 
       const w = Math.min(byWidth, widthFromHeight);
-      setWidth(Math.round(clamp(w, 200, 420))); // bornes sûres
+      setWidth(Math.round(clamp(w, 180, 300))); // borne min/max
     };
     compute();
     window.addEventListener("resize", compute);
@@ -132,7 +134,7 @@ function Landing({ onEnter }) {
         position: "relative",
         overflow: "hidden",
         display: "grid",
-        placeItems: "center", // ← centre TOUT le bloc au milieu
+        placeItems: "center",
         textAlign: "center",
         padding: "24px 12px",
       }}
@@ -155,14 +157,13 @@ function Landing({ onEnter }) {
         style={{
           position: "absolute",
           inset: 0,
-          background:
-            "linear-gradient(180deg, rgba(11,15,26,.18), rgba(11,15,26,.55))",
+          background: "linear-gradient(180deg, rgba(11,15,26,.18), rgba(11,15,26,.55))",
           zIndex: 0,
         }}
         aria-hidden
       />
 
-      {/* Contenu centré (titre → porte → hint) */}
+      {/* Colonne centrée : Titre → Hint → Porte (tous centrés) */}
       <div
         style={{
           position: "relative",
@@ -178,28 +179,40 @@ function Landing({ onEnter }) {
         <h1 style={{ fontFamily: "serif", fontSize: 28, margin: 0, textShadow: "0 1px 0 #000" }}>
           Le Labo Fantôme — École
         </h1>
+        <p style={{ opacity: 0.95, maxWidth: 720, padding: "0 12px", margin: 0 }}>
+          Une porte s'entrouvre entre visible et invisible…
+        </p>
 
-        {/* Porte parfaitement centrée */}
-        <div
+        {/* HINT — AU-DESSUS DE LA PORTE */}
+        <p
           style={{
-            width,
-            height,
-            position: "relative",
-            margin: "8px auto 6px",   // ← centre horizontalement
+            fontSize: 16,
+            lineHeight: 1.2,
+            color: "#f7f7f7",
+            background: "rgba(0,0,0,.45)",
+            border: "1px solid rgba(255,255,255,.25)",
+            borderRadius: 10,
+            padding: "8px 12px",
+            textShadow: "0 1px 0 rgba(0,0,0,.5)",
+            marginTop: 10,
+            marginBottom: 6,
           }}
         >
+          Cliquer la porte pour entrer
+        </p>
+
+        {/* PORTE — parfaitement centrée et petite */}
+        <div style={{ width, height, position: "relative", margin: "0 auto" }}>
           <img
             src="/door-sprite.png"
             alt="Porte ancienne"
             onLoad={(e) => {
               const img = e.currentTarget;
-              if (img.naturalWidth) {
-                setRatio(img.naturalHeight / img.naturalWidth);
-              }
+              if (img.naturalWidth) setRatio(img.naturalHeight / img.naturalWidth);
             }}
             style={{
               position: "absolute",
-              inset: 0,               // ← l'image remplit le conteneur centré
+              inset: 0,
               objectFit: "contain",
               transformOrigin: "left center",
               transition: "transform .9s cubic-bezier(.2,.7,.1,1)",
@@ -233,27 +246,11 @@ function Landing({ onEnter }) {
             aria-hidden
           />
         </div>
-
-        {/* Aide lisible et centrée */}
-        <p
-          style={{
-            fontSize: 16,
-            lineHeight: 1.2,
-            color: "#f7f7f7",
-            background: "rgba(0,0,0,.45)",
-            border: "1px solid rgba(255,255,255,.25)",
-            borderRadius: 10,
-            padding: "8px 12px",
-            textShadow: "0 1px 0 rgba(0,0,0,.5)",
-            margin: 0,
-          }}
-        >
-          Cliquer la porte pour entrer
-        </p>
       </div>
     </section>
   );
 }
+
 
 
 /* =========================
