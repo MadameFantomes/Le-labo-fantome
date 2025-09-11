@@ -86,9 +86,6 @@ export default function Site() {
   );
 }
 
-/* =========================
-   Landing : mur pierres + porte CENTRÉE (comme au début), 100% visible
-   ========================= */
 function Landing({ onEnter }) {
   const [opened, setOpened] = useState(false);
 
@@ -214,7 +211,7 @@ function Landing({ onEnter }) {
               position: "absolute",
               inset: 0,
               objectFit: "contain",
-              transformOrigin: "left center",
+              transformOrigin: "center",
               transition: "transform .9s cubic-bezier(.2,.7,.1,1)",
               transform: opened
                 ? "perspective(1100px) rotateY(-72deg)"
