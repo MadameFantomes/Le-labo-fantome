@@ -306,6 +306,32 @@ const styles = {
   hallTitle: { fontFamily: "serif", fontSize: 28 },
   hallSub: { opacity: 0.9 },
   doorsGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 20, marginTop: 24 },
+  hallScreen: {
+  minHeight: "100vh",
+  position: "relative",
+  overflow: "hidden",
+},
+hallBg: {
+  position: "absolute",
+  inset: 0,
+  backgroundSize: "cover",
+  backgroundPosition: "center",
+  backgroundRepeat: "no-repeat",
+  zIndex: 0,
+},
+hallVeil: {
+  position: "absolute",
+  inset: 0,
+  background: "linear-gradient(180deg, rgba(11,15,26,.18), rgba(11,15,26,.55))",
+  zIndex: 0,
+},
+hallInner: {
+  position: "relative",
+  zIndex: 1,
+  maxWidth: 1200,
+  margin: "0 auto",
+  padding: "64px 16px",
+},
 
   miniDoorBtn: { background: "transparent", border: "none", textAlign: "center", cursor: "pointer" },
   miniDoorBody: { position: "relative", height: 240, borderRadius: 12, border: "1px solid rgba(255,255,255,.15)", background: "linear-gradient(180deg, rgba(59,45,31,.9) 0%, rgba(46,36,25,.9) 40%, rgba(37,29,20,.9) 100%), repeating-linear-gradient(90deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 22px)", boxShadow: "inset 0 0 0 1px rgba(0,0,0,.8), 0 20px 50px rgba(0,0,0,.4)" },
