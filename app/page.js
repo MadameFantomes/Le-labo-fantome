@@ -45,11 +45,7 @@ export default function Site() {
 
   return (
     <div style={styles.app}>
-      {!entered ? (
-        <Landing onEnter={handleEnter} />
-      ) : (
-        <Hall room={room} setRoom={setRoom} />
-      )}
+      {!entered ? <Landing onEnter={handleEnter} /> : <Hall room={room} setRoom={setRoom} />}
 
       <button
         onClick={toggleMute}
@@ -62,7 +58,7 @@ export default function Site() {
   );
 }
 
-/* ============ LANDING (porte centrée, descendue légèrement) ============ */
+/* ==================== LANDING (porte centrée, descendue) ==================== */
 function Landing({ onEnter }) {
   const [opened, setOpened] = useState(false);
 
@@ -96,7 +92,7 @@ function Landing({ onEnter }) {
             role="button"
             tabIndex={0}
             style={{
-              width: "clamp(220px, 34vw, 400px)", // ← ta taille validée
+              width: "clamp(220px, 34vw, 400px)", // taille validée
               height: "auto",
               transformOrigin: "left center",
               transition: "transform .9s cubic-bezier(.2,.7,.1,1)",
@@ -113,21 +109,23 @@ function Landing({ onEnter }) {
   );
 }
 
-/* ========================= HALL (plein écran avec image de fond) ========================= */
+/* ======================= HALL (fond plein écran + fallback) ======================= */
 function Hall({ room, setRoom }) {
   if (room === "labo") return <RoomLabo onBack={() => setRoom(null)} />;
   if (room === "etude") return <RoomEtude onBack={() => setRoom(null)} />;
   if (room === "ghostbox") return <RoomGhostBox onBack={() => setRoom(null)} />;
 
+  const [hallSrc, setHallSrc] = React.useState("/hall.jpg");
+
   return (
     <section style={styles.hallScreen} aria-label="Hall — Choisir une pièce">
-      {/* Astuce : 2 URLs -> /hall.jpg d’abord, puis fallback /background.png si le premier n’existe pas */}
-      <div
-        style={{
-          ...styles.hallBg,
-          backgroundImage: "url(/hall.jpg), url(/background.png)",
-        }}
+      {/* Image plein écran avec fallback automatique */}
+      <img
+        src={hallSrc}
+        alt=""
         aria-hidden
+        onError={() => setHallSrc("/background.png")}
+        style={styles.hallBgImg}
       />
       <div style={styles.hallVeil} aria-hidden />
 
@@ -303,25 +301,25 @@ const styles = {
 
   /* Hall plein écran */
   hallScreen: { minHeight: "100vh", position: "relative", overflow: "hidden" },
-  hallBg: {
+  hallBgImg: {
     position: "absolute",
     inset: 0,
-    /* 2 images : essaie d'abord hall.jpg, sinon background.png */
-    backgroundSize: "cover, cover",
-    backgroundPosition: "center, center",
-    backgroundRepeat: "no-repeat, no-repeat",
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    objectPosition: "center",
     zIndex: 0,
   },
   hallVeil: { position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(11,15,26,.18), rgba(11,15,26,.55))", zIndex: 0 },
   hallInner: { position: "relative", zIndex: 1, maxWidth: 1200, margin: "0 auto", padding: "64px 16px" },
 
-  /* En-tête + portes (inchangé) */
+  /* En-tête + portes */
   hallHeader: { textAlign: "center", marginBottom: 24 },
   hallTitle: { fontFamily: "serif", fontSize: 28 },
   hallSub: { opacity: 0.9 },
   doorsGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 20, marginTop: 24 },
 
-  /* Rooms & cards (inchangé) */
+  /* Rooms & cards */
   roomSection: { position: "relative", minHeight: "100vh", padding: "32px 16px" },
   room: { marginTop: 16, maxWidth: 1200, marginLeft: "auto", marginRight: "auto" },
   roomHeader: { display: "flex", alignItems: "center", gap: 12, marginBottom: 16 },
