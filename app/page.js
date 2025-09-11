@@ -2,79 +2,56 @@
 
 import React, { useState, useMemo } from "react";
 
-/* ========= Réglages ========= */
-const BOORACLE_URL = "https://booracle.example.com"; // à remplacer
+/* ——— Réglages audio (facultatif) ——— */
 const DOOR_CREAK_URL = "/door-creak.mp3";
 const HALL_CHIME_URL = "/hall-chimes.mp3";
 const BACKGROUND_MUSIC_URL = "/bg-music.mp3";
-
-/* Porte : bornes confortables */
-const DOOR_MAX_WIDTH = 260;  // largeur max porte
-const DOOR_MIN_WIDTH = 140
-;  // largeur min porte
+const BOORACLE_URL = "https://booracle.example.com"; // remplace quand prêt
 
 export default function Site() {
   const [entered, setEntered] = useState(false);
   const [room, setRoom] = useState(null); // "labo" | "etude" | "ghostbox" | null
   const [muted, setMuted] = useState(false);
 
-  // audio
+  // Audio simple
   const [creak, setCreak] = useState(null);
   const [chime, setChime] = useState(null);
   const [bgm, setBgm] = useState(null);
-  const [chimeEnded, setChimeEnded] = useState(false);
 
   React.useEffect(() => {
     if (typeof window === "undefined") return;
     const c = new Audio(DOOR_CREAK_URL);
     const h = new Audio(HALL_CHIME_URL);
     const b = new Audio(BACKGROUND_MUSIC_URL);
-
     c.volume = 0.6;
     h.volume = 0.25; h.loop = false;
     b.volume = 0.18; b.loop = true;
-
-    const onEnded = () => {
-      setChimeEnded(true);
-      if (!muted) { try { b.play(); } catch {} }
-    };
-    h.addEventListener("ended", onEnded);
-
+    h.addEventListener("ended", () => { if (!muted) b.play().catch(()=>{}); });
     setCreak(c); setChime(h); setBgm(b);
-    return () => {
-      try { h.removeEventListener("ended", onEnded); } catch {}
-      try { h.pause(); } catch {}
-      try { b.pause(); } catch {}
-    };
+    return () => { try{h.pause()}catch{}; try{b.pause()}catch{}; };
   }, [muted]);
 
   const handleEnter = () => {
     setEntered(true);
-    if (!muted && creak) { try { creak.currentTime = 0; creak.play(); } catch {} }
+    if (!muted && creak) creak.play().catch(()=>{});
+    if (!muted && chime) chime.play().catch(()=>{});
   };
-
-  // chime (une fois) puis musique
-  React.useEffect(() => {
-    if (!entered || !chime) return;
-    if (muted) { try { chime.pause(); } catch {}; try { bgm && bgm.pause(); } catch {}; return; }
-    if (!chimeEnded) { try { chime.currentTime = 0; chime.play(); } catch {} }
-    else if (bgm) { try { bgm.play(); } catch {} }
-  }, [entered, muted, chime, bgm, chimeEnded]);
 
   const toggleMute = () => {
     setMuted(m => {
       const next = !m;
-      try {
-        if (next) { chime && chime.pause(); bgm && bgm.pause(); }
-        else if (entered) { if (chimeEnded && bgm) bgm.play().catch(()=>{}); else if (chime) chime.play().catch(()=>{}); }
-      } catch {}
+      try { if (next) { chime?.pause(); bgm?.pause(); } } catch {}
       return next;
     });
   };
 
   return (
     <div style={styles.app}>
-      {!entered ? <Landing onEnter={handleEnter} /> : <Hall room={room} setRoom={setRoom} />}
+      {!entered ? (
+        <Landing onEnter={handleEnter} />
+      ) : (
+        <Hall room={room} setRoom={setRoom} />
+      )}
 
       <button
         onClick={toggleMute}
@@ -87,172 +64,59 @@ export default function Site() {
   );
 }
 
+/* =========================
+   LANDING — Porte vraiment centrée
+   ========================= */
 function Landing({ onEnter }) {
   const [opened, setOpened] = useState(false);
 
-  const handleClick = () => {
+  const open = () => {
     if (opened) return;
     setOpened(true);
     setTimeout(() => onEnter(), 900);
   };
 
   return (
-    <section
-      style={{
-        minHeight: "100vh",
-        position: "relative",
-        overflow: "hidden",
-        textAlign: "center",
-      }}
-      aria-label="Accueil — Porte du Labo Fantôme"
-    >
-      {/* Mur de pierres */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          backgroundImage: 'url(/door-wall.jpg)',
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-        aria-hidden
-      />
-      {/* Voile sombre */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "linear-gradient(180deg, rgba(11,15,26,.20), rgba(11,15,26,.55))",
-        }}
-        aria-hidden
-      />
+    <section aria-label="Accueil — Porte du Labo" style={styles.screen}>
+      {/* Mur en pierre */}
+      <div style={{ ...styles.bg, backgroundImage: "url(/door-wall.jpg)" }} aria-hidden />
+      <div style={styles.bgVeil} aria-hidden />
 
-      {/* PORTE — centrée, DERRIÈRE le texte, mais cliquable */}
-      <img
-        src="/door-sprite.png"
-        alt="Porte ancienne"
-        onClick={handleClick}
-        onKeyDown={(e) => e.key === "Enter" && handleClick()}
-        role="button"
-        tabIndex={0}
-        style={{
-          position: "absolute",
-          left: "50%",
-          top: "50%",
-          transform: `translate(-50%, -50%) ${opened ? "perspective(1100px) rotateY(-72deg)" : "perspective(1100px) rotateY(0deg)"}`,
-          width: "clamp(160px, 26vw, 320px)", // taille raisonnable, toujours visible
-          height: "auto",
-          zIndex: 1,                 // derrière le texte
-          cursor: "pointer",
-          filter: "drop-shadow(0 18px 40px rgba(0,0,0,.45))",
-          userSelect: "none",
-        }}
-      />
+      {/* TEXTE — couche fixe au-dessus, ne capte pas les clics */}
+      <div style={styles.topTextLayer} aria-hidden>
+        <h1 style={styles.title}>Le Labo Fantôme — École</h1>
+        <p style={styles.subtitle}>Une porte s&apos;entrouvre entre visible et invisible…</p>
+        <p style={styles.hint}>Cliquer la porte pour entrer</p>
+      </div>
 
-      {/* CONTENU DEVANT (ne bloque pas les clics sur la porte) */}
-      <div
-        style={{
-          position: "relative",
-          zIndex: 2,
-          display: "grid",
-          placeItems: "center",
-          padding: "32px 16px",
-          minHeight: "100vh",
-          pointerEvents: "none", // ← les clics passent à la porte
-        }}
-      >
-        <div style={{ maxWidth: 900 }}>
-          <h1
-            style={{
-              fontFamily: "serif",
-              fontSize: 28,
-              margin: 0,
-              textShadow: "0 1px 0 #000",
-            }}
-          >
-            Le Labo Fantôme — École
-          </h1>
-          <p style={{ opacity: 0.95, marginTop: 6 }}>
-            Une porte s'entrouvre entre visible et invisible…
-          </p>
-
-          {/* Hint bien visible, centré */}
-          <p
-            style={{
-              display: "inline-block",
-              fontSize: 16,
-              marginTop: 16,
-              color: "#f7f7f7",
-              background: "rgba(0,0,0,.45)",
-              border: "1px solid rgba(255,255,255,.25)",
-              borderRadius: 10,
-              padding: "8px 12px",
-              textShadow: "0 1px 0 rgba(0,0,0,.5)",
-            }}
-          >
-            Cliquer la porte pour entrer
-          </p>
-        </div>
+      {/* PORTE — couche FIXE centrée (flex). Clics actifs. */}
+      <div style={styles.doorLayer}>
+        <img
+          src="/door-sprite.png"
+          alt="Porte ancienne"
+          onClick={open}
+          onKeyDown={(e) => e.key === "Enter" && open()}
+          role="button"
+          tabIndex={0}
+          style={{
+            width: "clamp(140px, 22vw, 260px)", // ← petite et toujours visible
+            height: "auto",
+            transformOrigin: "left center",
+            transition: "transform .9s cubic-bezier(.2,.7,.1,1)",
+            transform: opened
+              ? "perspective(1100px) rotateY(-72deg)"
+              : "perspective(1100px) rotateY(0deg)",
+            cursor: "pointer",
+            filter: "drop-shadow(0 18px 40px rgba(0,0,0,.45))",
+          }}
+        />
       </div>
     </section>
   );
 }
-
-        {/* PORTE — parfaitement centrée et petite */}
-        <div style={{ width, height, position: "relative", margin: "0 auto" }}>
-          <img
-            src="/door-sprite.png"
-            alt="Porte ancienne"
-            onLoad={(e) => {
-              const img = e.currentTarget;
-              if (img.naturalWidth) setRatio(img.naturalHeight / img.naturalWidth);
-            }}
-            style={{
-              position: "absolute",
-              inset: 0,
-              objectFit: "contain",
-              transformOrigin: "center",
-              transition: "transform .9s cubic-bezier(.2,.7,.1,1)",
-              transform: opened
-                ? "perspective(1100px) rotateY(-72deg)"
-                : "perspective(1100px) rotateY(0deg)",
-              cursor: "pointer",
-              filter: "drop-shadow(0 18px 40px rgba(0,0,0,.45))",
-            }}
-            onClick={handleClick}
-            onKeyDown={(e) => e.key === "Enter" && handleClick()}
-            role="button"
-            tabIndex={0}
-            aria-label="Entrer dans le Labo"
-          />
-
-          {/* Lueur optionnelle */}
-          <div
-            style={{
-              position: "absolute",
-              left: -2,
-              top: 0,
-              bottom: 0,
-              width: 24,
-              background:
-                "linear-gradient(90deg, rgba(255,238,170,.50), rgba(255,238,170,0))",
-              filter: "blur(8px)",
-              opacity: 0.8,
-              pointerEvents: "none",
-            }}
-            aria-hidden
-          />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-
 
 /* =========================
-   Hall (puis les pièces)
+   Hall + pièces
    ========================= */
 function Hall({ room, setRoom }) {
   if (room === "labo") return <RoomLabo onBack={() => setRoom(null)} />;
@@ -286,7 +150,6 @@ function MiniDoor({ title, subtitle, icon, onClick }) {
   );
 }
 
-/* ======= Rooms ======= */
 function RoomLabo({ onBack }) {
   return (
     <div style={{ ...styles.roomSection, ...bg("/lab.jpg") }}>
@@ -294,18 +157,18 @@ function RoomLabo({ onBack }) {
         <RoomHeader title="Le Labo" subtitle="Réception — Réflexion — Transmission" onBack={onBack} />
         <div style={styles.roomContent}>
           <Card>
-            <h3 style={styles.cardTitle}>Protocole d'enregistrement (démo)</h3>
+            <h3 style={styles.cardTitle}>Protocole d&apos;enregistrement (démo)</h3>
             <ol style={styles.list}>
-              <li>Prépare l'espace : silence, intention, timer 10–15 min.</li>
-              <li>Matériel : micro + casque ; note la date/heure.</li>
-              <li>Enregistre ; marque les timecodes notables.</li>
-              <li>À l'écoute : sépare artefacts / voix / symboles.</li>
-              <li>Consigne tout dans le carnet de labo.</li>
+              <li>Préparer l&apos;espace : silence, intention, 10–15 min.</li>
+              <li>Matériel : micro + casque ; noter la date/heure.</li>
+              <li>Enregistrer ; marquer les timecodes notables.</li>
+              <li>À l&apos;écoute : distinguer artefacts / voix / symboles.</li>
+              <li>Consigner dans le carnet de labo.</li>
             </ol>
           </Card>
           <Card>
-            <h3 style={styles.cardTitle}>Carnet de labo (bloc-notes local)</h3>
-            <NotePad storageKey="labo_note" placeholder="Ex. Hypothèse: mot 'clairière' perçu; 03:12 chuchotement; Carte Booracle: 'Lumière'…" />
+            <h3 style={styles.cardTitle}>Carnet de labo</h3>
+            <NotePad storageKey="labo_note" placeholder="Hypothèses, timecodes, cartes Booracle…" />
           </Card>
         </div>
       </div>
@@ -317,16 +180,15 @@ function RoomEtude({ onBack }) {
   return (
     <div style={{ ...styles.roomSection, ...bg("/library.jpg") }}>
       <div style={styles.room}>
-        <RoomHeader title="Salle d'étude" subtitle="Bibliothèque — Livret — Booracle" onBack={onBack} />
+        <RoomHeader title="Salle d&apos;étude" subtitle="Bibliothèque — Livret — Booracle" onBack={onBack} />
         <div style={styles.roomContent}>
           <Card>
-            <h3 style={styles.cardTitle}>Livret d'étude</h3>
-            <p style={styles.p}>Ton livret interactif (flipbook/PDF) pourra être lié ici (bouton ou aperçu). Donne-moi l'URL quand tu l'as.</p>
-            <button style={styles.primaryBtn} onClick={() => alert("Ajoute l'URL du livret quand prêt.")}>Ouvrir le livret</button>
+            <h3 style={styles.cardTitle}>Livret d&apos;étude</h3>
+            <p style={styles.p}>Ton livret (PDF/flipbook) pourra être lié ici.</p>
+            <button style={styles.primaryBtn} onClick={() => alert("Ajoute l'URL du livret ici quand prêt.")}>Ouvrir le livret</button>
           </Card>
           <Card>
             <h3 style={styles.cardTitle}>Booracle en ligne</h3>
-            <p style={styles.p}>Instrument de pensée : tirer une carte avant/après une séance.</p>
             <div style={styles.iframeWrap}><iframe title="Booracle" src={BOORACLE_URL} style={styles.iframe} /></div>
           </Card>
         </div>
@@ -339,20 +201,12 @@ function RoomGhostBox({ onBack }) {
   return (
     <div style={{ ...styles.roomSection, ...bg("/ghostbox.jpg") }}>
       <div style={styles.room}>
-        <RoomHeader title="GhostBox" subtitle="Console en ligne (intégration à venir)" onBack={onBack} />
+        <RoomHeader title="GhostBox" subtitle="Console en ligne (bientôt)" onBack={onBack} />
         <div style={styles.roomContent}>
           <Card>
             <h3 style={styles.cardTitle}>Intégration prochaine</h3>
-            <p style={styles.p}>Quand tu auras une GhostBox web ou un lecteur/flux audio, on peut l'intégrer ici (iframe, audio HTML5, ou lien externe).</p>
-            <button style={styles.secondaryBtn} onClick={() => alert("On branchera l'URL de la GhostBox ici.")}>Préparer l'intégration</button>
-          </Card>
-          <Card>
-            <h3 style={styles.cardTitle}>Conseils d'usage</h3>
-            <ul style={styles.list}>
-              <li>Cadre juste & intention claire.</li>
-              <li>Écoute prudente : noter, comparer, recouper.</li>
-              <li>Jamais d'affirmations hâtives ; éthique avant tout.</li>
-            </ul>
+            <p style={styles.p}>On branchera l&apos;URL/flux de ta GhostBox ici.</p>
+            <button style={styles.secondaryBtn} onClick={() => alert("Prévoir l'URL de la GhostBox.")}>Préparer l&apos;intégration</button>
           </Card>
         </div>
       </div>
@@ -375,24 +229,25 @@ function RoomHeader({ title, subtitle, onBack }) {
 function Card({ children }) { return <div style={styles.card}>{children}</div>; }
 
 function NotePad({ storageKey, placeholder }) {
-  const initial = useMemo(() => (typeof window !== "undefined" ? localStorage.getItem(storageKey) || "" : ""), [storageKey]);
+  const initial = useMemo(() =>
+    (typeof window !== "undefined" ? localStorage.getItem(storageKey) || "" : "")
+  , [storageKey]);
   const [v, setV] = useState(initial);
   const [saved, setSaved] = useState(false);
   return (
     <div>
-      <textarea value={v} onChange={(e) => { setV(e.target.value); setSaved(false); }} placeholder={placeholder} style={styles.textarea} />
+      <textarea value={v} onChange={(e)=>{setV(e.target.value); setSaved(false);}} placeholder={placeholder} style={styles.textarea}/>
       <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-        <button style={styles.primaryBtn} onClick={() => { localStorage.setItem(storageKey, v); setSaved(true); }}>Enregistrer</button>
-        <button style={styles.secondaryBtn} onClick={() => { const s = localStorage.getItem(storageKey) || ""; setV(s); setSaved(false); }}>Recharger</button>
+        <button style={styles.primaryBtn} onClick={()=>{localStorage.setItem(storageKey, v); setSaved(true);}}>Enregistrer</button>
+        <button style={styles.secondaryBtn} onClick={()=>{const s = localStorage.getItem(storageKey)||""; setV(s); setSaved(false);}}>Recharger</button>
       </div>
       {saved && <p style={styles.saved}>Enregistré ✓</p>}
     </div>
   );
 }
 
-/* =========================
-   Helpers & Styles
-   ========================= */
+/* ========== STYLES & HELPERS ========== */
+
 function bg(url) {
   return {
     backgroundImage: `url(${url})`,
@@ -405,58 +260,39 @@ function bg(url) {
 const styles = {
   app: { minHeight: "100vh", background: "#0b0f1a", color: "#f6f6f6" },
 
-  /* Accueil plein écran */
-  fullscreen: {
-    minHeight: "100vh",
-    position: "relative",
-    overflow: "hidden",
-    display: "grid",
-    placeItems: "center", // ← centre le bloc (titre+porte+hint) verticalement & horizontalement
+  /* Plein écran */
+  screen: { minHeight: "100vh", position: "relative", overflow: "hidden" },
+
+  /* Fond pierre */
+  bg: { position: "absolute", inset: 0, backgroundSize: "cover", backgroundPosition: "center" },
+  bgVeil: { position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(11,15,26,.20), rgba(11,15,26,.55))" },
+
+  /* Couche texte fixe — devant, ne bloque pas les clics */
+  topTextLayer: {
+    position: "fixed", top: 0, left: 0, right: 0,
+    display: "grid", placeItems: "center",
+    paddingTop: "6vh",
     textAlign: "center",
-    padding: "24px 12px",
+    pointerEvents: "none", // les clics passent à la porte
+    zIndex: 3,
+  },
+  title: { fontFamily: "serif", fontSize: 28, margin: 0, textShadow: "0 1px 0 #000" },
+  subtitle: { opacity: 0.95, margin: "6px 0 10px", maxWidth: 720 },
+  hint: {
+    display: "inline-block",
+    fontSize: 16, color: "#f7f7f7",
+    background: "rgba(0,0,0,.45)", border: "1px solid rgba(255,255,255,.25)",
+    borderRadius: 10, padding: "8px 12px", textShadow: "0 1px 0 rgba(0,0,0,.5)",
   },
 
-  /* Fond + voile */
-  bgImage: {
-    position: "absolute",
-    inset: 0,
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    backgroundRepeat: "no-repeat",
-    zIndex: 0,
-  },
-  bgOverlay: {
-    position: "absolute",
-    inset: 0,
-    background: "linear-gradient(180deg, rgba(11,15,26,.18), rgba(11,15,26,.55))",
-    zIndex: 0,
+  /* Couche PORTE — fixe, centrée via FLEX */
+  doorLayer: {
+    position: "fixed", inset: 0,
+    display: "flex", alignItems: "center", justifyContent: "center",
+    zIndex: 2, pointerEvents: "auto",
   },
 
-  /* Colonne centrée (comme au début) */
-  centerCol: {
-    position: "relative",
-    zIndex: 1,
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: 10,
-  },
-  title: { fontFamily: "serif", fontSize: 28, letterSpacing: 1, textShadow: "0 1px 0 #000", margin: 0 },
-
-  /* Aide lisible sous la porte */
-  hintBig: {
-    fontSize: 16,
-    lineHeight: 1.2,
-    color: "#f7f7f7",
-    background: "rgba(0,0,0,.45)",
-    border: "1px solid rgba(255,255,255,.25)",
-    borderRadius: 10,
-    padding: "8px 12px",
-    textShadow: "0 1px 0 rgba(0,0,0,.5)",
-    marginTop: 10,
-  },
-
-  /* Hall & Rooms */
+  /* Hall, cards… */
   hall: { minHeight: "100vh", padding: "64px 16px", maxWidth: 1200, margin: "0 auto" },
   hallHeader: { textAlign: "center", marginBottom: 24 },
   hallTitle: { fontFamily: "serif", fontSize: 28 },
@@ -464,7 +300,7 @@ const styles = {
   doorsGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 20, marginTop: 24 },
 
   miniDoorBtn: { background: "transparent", border: "none", textAlign: "center", cursor: "pointer" },
-  miniDoorBody: { position: "relative", height: 240, borderRadius: 12, border: "1px solid rgba(255,255,255,.15)", background: "linear-gradient(180deg, rgba(59,45,31,.9) 0%, rgba(46,36,25,.9) 40%, rgba(37,29,20,.9) 100%), repeating-linear-gradient(90deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 22px)", boxShadow: "inset 0 0 0 1px rgba(0,0,0,.8), 0 20px 50px rgba(0,0,0,.4)", transition: "transform .35s ease, filter .35s ease" },
+  miniDoorBody: { position: "relative", height: 240, borderRadius: 12, border: "1px solid rgba(255,255,255,.15)", background: "linear-gradient(180deg, rgba(59,45,31,.9) 0%, rgba(46,36,25,.9) 40%, rgba(37,29,20,.9) 100%), repeating-linear-gradient(90deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 22px)", boxShadow: "inset 0 0 0 1px rgba(0,0,0,.8), 0 20px 50px rgba(0,0,0,.4)" },
   miniDoorTop: { position: "absolute", top: 12, left: 0, right: 0, display: "grid", placeItems: "center" },
   miniDoorIcon: { fontSize: 28 },
   miniDoorPlate: { position: "absolute", bottom: 12, left: "50%", transform: "translateX(-50%)", padding: "4px 10px", borderRadius: 8, border: "1px solid rgba(255,255,255,.25)", background: "rgba(0,0,0,.35)", fontFamily: "serif", letterSpacing: 1 },
@@ -487,6 +323,5 @@ const styles = {
   secondaryBtn: { background: "transparent", color: "#fff", border: "1px solid rgba(255,255,255,.35)", padding: "8px 12px", borderRadius: 10, cursor: "pointer" },
   saved: { fontSize: 12, color: "#86efac", marginTop: 6 },
 
-  // bouton son
-  muteFloating: { position: "fixed", right: 14, bottom: 14, zIndex: 60, width: 44, height: 44, borderRadius: 12, background: "rgba(255,255,255,.1)", color: "#fff", border: "1px solid rgba(255,255,255,.25)", cursor: "pointer", boxShadow: "0 6px 18px rgba(0,0,0,.35)", fontSize: 22 },
+  muteFloating: { position: "fixed", right: 14, bottom: 14, zIndex: 10, width: 44, height: 44, borderRadius: 12, background: "rgba(255,255,255,.1)", color: "#fff", border: "1px solid rgba(255,255,255,.25)", cursor: "pointer", boxShadow: "0 6px 18px rgba(0,0,0,.35)", fontSize: 22 },
 };
