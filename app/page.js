@@ -124,19 +124,27 @@ function Hall({ room, setRoom }) {
   if (room === "ghostbox") return <RoomGhostBox onBack={() => setRoom(null)} />;
 
   return (
-    <section style={{ ...styles.hall, ...bg("/hall.jpg") }} aria-label="Hall — Choisir une pièce">
-      <div style={styles.hallHeader}>
-        <h2 style={styles.hallTitle}>Hall du Labo</h2>
-        <p style={styles.hallSub}>Choisis une porte pour continuer</p>
-      </div>
-      <div style={styles.doorsGrid}>
-        <MiniDoor title="Le Labo" subtitle="TCI & enregistrements" icon="🎙️" onClick={() => setRoom("labo")} />
-        <MiniDoor title="Salle d'étude" subtitle="Bibliothèque, Livret, Booracle" icon="📚" onClick={() => setRoom("etude")} />
-        <MiniDoor title="GhostBox" subtitle="Console en ligne" icon="📻" onClick={() => setRoom("ghostbox")} />
+    <section style={styles.hallScreen} aria-label="Hall — Choisir une pièce">
+      {/* Fond plein écran */}
+      <div style={{ ...styles.hallBg, backgroundImage: "url(/hall.jpg)" }} aria-hidden />
+      <div style={styles.hallVeil} aria-hidden />
+
+      {/* Contenu au-dessus */}
+      <div style={styles.hallInner}>
+        <div style={styles.hallHeader}>
+          <h2 style={styles.hallTitle}>Hall du Labo</h2>
+          <p style={styles.hallSub}>Choisis une porte pour continuer</p>
+        </div>
+        <div style={styles.doorsGrid}>
+          <MiniDoor title="Le Labo" subtitle="TCI & enregistrements" icon="🎙️" onClick={() => setRoom("labo")} />
+          <MiniDoor title="Salle d'étude" subtitle="Bibliothèque, Livret, Booracle" icon="📚" onClick={() => setRoom("etude")} />
+          <MiniDoor title="GhostBox" subtitle="Console en ligne" icon="📻" onClick={() => setRoom("ghostbox")} />
+        </div>
       </div>
     </section>
   );
 }
+
 
 function MiniDoor({ title, subtitle, icon, onClick }) {
   return (
