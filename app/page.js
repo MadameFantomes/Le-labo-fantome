@@ -9,8 +9,9 @@ const HALL_CHIME_URL = "/hall-chimes.mp3";
 const BACKGROUND_MUSIC_URL = "/bg-music.mp3";
 
 /* Porte : bornes confortables */
-const DOOR_MAX_WIDTH = 420;  // largeur max porte
-const DOOR_MIN_WIDTH = 200;  // largeur min porte
+const DOOR_MAX_WIDTH = 260;  // largeur max porte
+const DOOR_MIN_WIDTH = 140
+;  // largeur min porte
 
 export default function Site() {
   const [entered, setEntered] = useState(false);
