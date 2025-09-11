@@ -99,7 +99,7 @@ function Landing({ onEnter }) {
           role="button"
           tabIndex={0}
           style={{
-            width: "clamp(200px, 30vw, 360px)", // ← petite et toujours visible
+            width: "clamp(220px, 34vw, 400px)", // ← petite et toujours visible
             height: "auto",
             transformOrigin: "left center",
             transition: "transform .9s cubic-bezier(.2,.7,.1,1)",
