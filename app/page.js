@@ -2,7 +2,6 @@
 
 import React, { useState, useMemo } from "react";
 
-/* ——— Réglages audio (facultatif) ——— */
 const DOOR_CREAK_URL = "/door-creak.mp3";
 const HALL_CHIME_URL = "/hall-chimes.mp3";
 const BACKGROUND_MUSIC_URL = "/bg-music.mp3";
@@ -13,7 +12,6 @@ export default function Site() {
   const [room, setRoom] = useState(null); // "labo" | "etude" | "ghostbox" | null
   const [muted, setMuted] = useState(false);
 
-  // Audio simple
   const [creak, setCreak] = useState(null);
   const [chime, setChime] = useState(null);
   const [bgm, setBgm] = useState(null);
@@ -64,9 +62,7 @@ export default function Site() {
   );
 }
 
-/* =========================
-   LANDING — Porte vraiment centrée
-   ========================= */
+/* ============ LANDING (porte centrée, descendue légèrement) ============ */
 function Landing({ onEnter }) {
   const [opened, setOpened] = useState(false);
 
@@ -78,46 +74,46 @@ function Landing({ onEnter }) {
 
   return (
     <section aria-label="Accueil — Porte du Labo" style={styles.screen}>
-      {/* Mur en pierre */}
+      {/* Fond mur en pierre */}
       <div style={{ ...styles.bg, backgroundImage: "url(/door-wall.jpg)" }} aria-hidden />
       <div style={styles.bgVeil} aria-hidden />
 
-      {/* TEXTE — couche fixe au-dessus, ne capte pas les clics */}
+      {/* Texte — devant, ne bloque pas les clics */}
       <div style={styles.topTextLayer} aria-hidden>
         <h1 style={styles.title}>Le Labo Fantôme — École</h1>
         <p style={styles.subtitle}>Une porte s&apos;entrouvre entre visible et invisible…</p>
         <p style={styles.hint}>Cliquer la porte pour entrer</p>
       </div>
 
-      {/* PORTE — couche FIXE centrée (flex). Clics actifs. */}
+      {/* PORTE — fixe, centrée ; wrapper pour descendre un peu la porte */}
       <div style={styles.doorLayer}>
-        <img
-          src="/door-sprite.png"
-          alt="Porte ancienne"
-          onClick={open}
-          onKeyDown={(e) => e.key === "Enter" && open()}
-          role="button"
-          tabIndex={0}
-          style={{
-            width: "clamp(220px, 34vw, 400px)", // ← petite et toujours visible
-            height: "auto",
-            transformOrigin: "left center",
-            transition: "transform .9s cubic-bezier(.2,.7,.1,1)",
-            transform: opened
-              ? "perspective(1100px) rotateY(-72deg)"
-              : "perspective(1100px) rotateY(0deg)",
-            cursor: "pointer",
-            filter: "drop-shadow(0 18px 40px rgba(0,0,0,.45))",
-          }}
-        />
+        <div style={{ transform: "translateY(5vh)" }}>
+          <img
+            src="/door-sprite.png"
+            alt="Porte ancienne"
+            onClick={open}
+            onKeyDown={(e) => e.key === "Enter" && open()}
+            role="button"
+            tabIndex={0}
+            style={{
+              width: "clamp(220px, 34vw, 400px)", // ← ta taille validée
+              height: "auto",
+              transformOrigin: "left center",
+              transition: "transform .9s cubic-bezier(.2,.7,.1,1)",
+              transform: opened
+                ? "perspective(1100px) rotateY(-72deg)"
+                : "perspective(1100px) rotateY(0deg)",
+              cursor: "pointer",
+              filter: "drop-shadow(0 18px 40px rgba(0,0,0,.45))",
+            }}
+          />
+        </div>
       </div>
     </section>
   );
 }
 
-/* =========================
-   Hall + pièces
-   ========================= */
+/* ========================= HALL (plein écran avec image de fond) ========================= */
 function Hall({ room, setRoom }) {
   if (room === "labo") return <RoomLabo onBack={() => setRoom(null)} />;
   if (room === "etude") return <RoomEtude onBack={() => setRoom(null)} />;
@@ -125,11 +121,16 @@ function Hall({ room, setRoom }) {
 
   return (
     <section style={styles.hallScreen} aria-label="Hall — Choisir une pièce">
-      {/* Fond plein écran */}
-      <div style={{ ...styles.hallBg, backgroundImage: "url(/hall.jpg)" }} aria-hidden />
+      {/* Astuce : 2 URLs -> /hall.jpg d’abord, puis fallback /background.png si le premier n’existe pas */}
+      <div
+        style={{
+          ...styles.hallBg,
+          backgroundImage: "url(/hall.jpg), url(/background.png)",
+        }}
+        aria-hidden
+      />
       <div style={styles.hallVeil} aria-hidden />
 
-      {/* Contenu au-dessus */}
       <div style={styles.hallInner}>
         <div style={styles.hallHeader}>
           <h2 style={styles.hallTitle}>Hall du Labo</h2>
@@ -145,7 +146,6 @@ function Hall({ room, setRoom }) {
   );
 }
 
-
 function MiniDoor({ title, subtitle, icon, onClick }) {
   return (
     <button onClick={onClick} style={styles.miniDoorBtn} aria-label={title}>
@@ -158,6 +158,7 @@ function MiniDoor({ title, subtitle, icon, onClick }) {
   );
 }
 
+/* ========================= Pièces ========================= */
 function RoomLabo({ onBack }) {
   return (
     <div style={{ ...styles.roomSection, ...bg("/lab.jpg") }}>
@@ -254,7 +255,7 @@ function NotePad({ storageKey, placeholder }) {
   );
 }
 
-/* ========== STYLES & HELPERS ========== */
+/* ======================= STYLES & HELPERS ======================= */
 
 function bg(url) {
   return {
@@ -268,20 +269,20 @@ function bg(url) {
 const styles = {
   app: { minHeight: "100vh", background: "#0b0f1a", color: "#f6f6f6" },
 
-  /* Plein écran */
+  /* Plein écran générique */
   screen: { minHeight: "100vh", position: "relative", overflow: "hidden" },
 
-  /* Fond pierre */
+  /* Fond pierre (accueil) */
   bg: { position: "absolute", inset: 0, backgroundSize: "cover", backgroundPosition: "center" },
   bgVeil: { position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(11,15,26,.20), rgba(11,15,26,.55))" },
 
-  /* Couche texte fixe — devant, ne bloque pas les clics */
+  /* Couche texte — devant, ne bloque pas les clics */
   topTextLayer: {
     position: "fixed", top: 0, left: 0, right: 0,
     display: "grid", placeItems: "center",
     paddingTop: "6vh",
     textAlign: "center",
-    pointerEvents: "none", // les clics passent à la porte
+    pointerEvents: "none",
     zIndex: 3,
   },
   title: { fontFamily: "serif", fontSize: 28, margin: 0, textShadow: "0 1px 0 #000" },
@@ -293,53 +294,34 @@ const styles = {
     borderRadius: 10, padding: "8px 12px", textShadow: "0 1px 0 rgba(0,0,0,.5)",
   },
 
-  /* Couche PORTE — fixe, centrée via FLEX */
+  /* Porte centrée */
   doorLayer: {
     position: "fixed", inset: 0,
     display: "flex", alignItems: "center", justifyContent: "center",
     zIndex: 2, pointerEvents: "auto",
   },
 
-  /* Hall, cards… */
-  hall: { minHeight: "100vh", padding: "64px 16px", maxWidth: 1200, margin: "0 auto" },
+  /* Hall plein écran */
+  hallScreen: { minHeight: "100vh", position: "relative", overflow: "hidden" },
+  hallBg: {
+    position: "absolute",
+    inset: 0,
+    /* 2 images : essaie d'abord hall.jpg, sinon background.png */
+    backgroundSize: "cover, cover",
+    backgroundPosition: "center, center",
+    backgroundRepeat: "no-repeat, no-repeat",
+    zIndex: 0,
+  },
+  hallVeil: { position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(11,15,26,.18), rgba(11,15,26,.55))", zIndex: 0 },
+  hallInner: { position: "relative", zIndex: 1, maxWidth: 1200, margin: "0 auto", padding: "64px 16px" },
+
+  /* En-tête + portes (inchangé) */
   hallHeader: { textAlign: "center", marginBottom: 24 },
   hallTitle: { fontFamily: "serif", fontSize: 28 },
   hallSub: { opacity: 0.9 },
   doorsGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 20, marginTop: 24 },
-  hallScreen: {
-  minHeight: "100vh",
-  position: "relative",
-  overflow: "hidden",
-},
-hallBg: {
-  position: "absolute",
-  inset: 0,
-  backgroundSize: "cover",
-  backgroundPosition: "center",
-  backgroundRepeat: "no-repeat",
-  zIndex: 0,
-},
-hallVeil: {
-  position: "absolute",
-  inset: 0,
-  background: "linear-gradient(180deg, rgba(11,15,26,.18), rgba(11,15,26,.55))",
-  zIndex: 0,
-},
-hallInner: {
-  position: "relative",
-  zIndex: 1,
-  maxWidth: 1200,
-  margin: "0 auto",
-  padding: "64px 16px",
-},
 
-  miniDoorBtn: { background: "transparent", border: "none", textAlign: "center", cursor: "pointer" },
-  miniDoorBody: { position: "relative", height: 240, borderRadius: 12, border: "1px solid rgba(255,255,255,.15)", background: "linear-gradient(180deg, rgba(59,45,31,.9) 0%, rgba(46,36,25,.9) 40%, rgba(37,29,20,.9) 100%), repeating-linear-gradient(90deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 22px)", boxShadow: "inset 0 0 0 1px rgba(0,0,0,.8), 0 20px 50px rgba(0,0,0,.4)" },
-  miniDoorTop: { position: "absolute", top: 12, left: 0, right: 0, display: "grid", placeItems: "center" },
-  miniDoorIcon: { fontSize: 28 },
-  miniDoorPlate: { position: "absolute", bottom: 12, left: "50%", transform: "translateX(-50%)", padding: "4px 10px", borderRadius: 8, border: "1px solid rgba(255,255,255,.25)", background: "rgba(0,0,0,.35)", fontFamily: "serif", letterSpacing: 1 },
-  miniDoorCaption: { marginTop: 10, opacity: 0.95 },
-
+  /* Rooms & cards (inchangé) */
   roomSection: { position: "relative", minHeight: "100vh", padding: "32px 16px" },
   room: { marginTop: 16, maxWidth: 1200, marginLeft: "auto", marginRight: "auto" },
   roomHeader: { display: "flex", alignItems: "center", gap: 12, marginBottom: 16 },
