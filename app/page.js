@@ -76,7 +76,7 @@ function Landing({ onEnter }) {
 
       {/* Texte — devant, ne bloque pas les clics */}
       <div style={styles.topTextLayer} aria-hidden>
-        <h1 style={styles.title}>Le Labo Fantôme — École</h1>
+        <h1 style={styles.title}>Le Labo Fantôme École</h1>
         <p style={styles.subtitle}>Une porte s&apos;entrouvre entre visible et invisible…</p>
         <p style={styles.hint}>Cliquer la porte pour entrer</p>
       </div>
