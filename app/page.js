@@ -1,20 +1,48 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import localFont from "next/font/local";
-
-// === POLICE TITRE : Misteri Caps (fichier dans app/fonts/MisteriCapsRegular.woff2) ===
-const MisteriCaps = localFont({
-  src: [{ path: "./fonts/MisteriCapsRegular.woff2", weight: "400", style: "normal" }],
-  display: "swap",
-});
 
 const DOOR_CREAK_URL = "/door-creak.mp3";
 const HALL_CHIME_URL = "/hall-chimes.mp3";
 const BACKGROUND_MUSIC_URL = "/bg-music.mp3";
 const BOORACLE_URL = "https://booracle.example.com"; // remplace quand prêt
 
+// ---------- Error Boundary pour voir l’exception côté client ----------
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, info) {
+    console.error("UI Error:", error, info);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: 24, color: "#fff", background: "#111" }}>
+          <h1 style={{ marginTop: 0 }}>Une erreur est survenue</h1>
+          <p>{String(this.state.error?.message || this.state.error || "Erreur inconnue")}</p>
+          <p>Ouvre la console du navigateur (F12) pour plus de détails.</p>
+          <button onClick={() => location.reload()}>Recharger</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function Site() {
+  return (
+    <ErrorBoundary>
+      <AppInner />
+    </ErrorBoundary>
+  );
+}
+
+function AppInner() {
   const [entered, setEntered] = useState(false);
   const [room, setRoom] = useState(null); // "labo" | "etude" | "ghostbox" | null
   const [muted, setMuted] = useState(false);
@@ -25,21 +53,25 @@ export default function Site() {
 
   React.useEffect(() => {
     if (typeof window === "undefined") return;
-    const c = new Audio(DOOR_CREAK_URL);
-    const h = new Audio(HALL_CHIME_URL);
-    const b = new Audio(BACKGROUND_MUSIC_URL);
-    c.volume = 0.6;
-    h.volume = 0.25; h.loop = false;
-    b.volume = 0.18; b.loop = true;
-    h.addEventListener("ended", () => { if (!muted) b.play().catch(()=>{}); });
-    setCreak(c); setChime(h); setBgm(b);
-    return () => { try{h.pause()}catch{}; try{b.pause()}catch{}; };
+    try {
+      const c = new Audio(DOOR_CREAK_URL);
+      const h = new Audio(HALL_CHIME_URL);
+      const b = new Audio(BACKGROUND_MUSIC_URL);
+      c.volume = 0.6;
+      h.volume = 0.25; h.loop = false;
+      b.volume = 0.18; b.loop = true;
+      h.addEventListener("ended", () => { if (!muted) b.play().catch(()=>{}); });
+      setCreak(c); setChime(h); setBgm(b);
+      return () => { try{h.pause()}catch{}; try{b.pause()}catch{}; };
+    } catch (e) {
+      console.warn("Audio init error:", e);
+    }
   }, [muted]);
 
   const handleEnter = () => {
     setEntered(true);
-    if (!muted && creak) creak.play().catch(()=>{});
-    if (!muted && chime) chime.play().catch(()=>{});
+    try { if (!muted && creak) creak.play().catch(()=>{}); } catch {}
+    try { if (!muted && chime) chime.play().catch(()=>{}); } catch {}
   };
 
   const toggleMute = () => {
@@ -83,10 +115,8 @@ function Landing({ onEnter }) {
 
       {/* Texte — devant */}
       <div style={styles.topTextLayer} aria-hidden>
-        {/* Applique Misteri Caps uniquement au H1 */}
-        <h1 className={MisteriCaps.className} style={styles.title}>
-          Le Labo Fantôme — École
-        </h1>
+        {/* H1 héritera de Misteri Caps via globals.css */}
+        <h1 style={styles.title}>Le Labo Fantôme — École</h1>
         <p style={styles.subtitle}>Une porte s&apos;entrouvre entre visible et invisible…</p>
         <p style={styles.hint}>Cliquer la porte pour entrer</p>
       </div>
@@ -125,7 +155,7 @@ function Hall({ room, setRoom }) {
   if (room === "etude") return <RoomEtude onBack={() => setRoom(null)} />;
   if (room === "ghostbox") return <RoomGhostBox onBack={() => setRoom(null)} />;
 
-  const [hallSrc, setHallSrc] = React.useState("/hall.jpg");
+  const [hallSrc, setHallSrc] = useState("/hall.jpg");
 
   return (
     <section style={styles.hallScreen} aria-label="Hall — Choisir une pièce">
@@ -206,7 +236,9 @@ function RoomEtude({ onBack }) {
           </Card>
           <Card>
             <h3 style={styles.cardTitle}>Booracle en ligne</h3>
-            <div style={styles.iframeWrap}><iframe title="Booracle" src={BOORACLE_URL} style={styles.iframe} /></div>
+            <div style={styles.iframeWrap}>
+              <iframe title="Booracle" src={BOORACLE_URL} style={styles.iframe} />
+            </div>
           </Card>
         </div>
       </div>
@@ -246,17 +278,33 @@ function RoomHeader({ title, subtitle, onBack }) {
 function Card({ children }) { return <div style={styles.card}>{children}</div>; }
 
 function NotePad({ storageKey, placeholder }) {
-  const initial = useMemo(() =>
-    (typeof window !== "undefined" ? localStorage.getItem(storageKey) || "" : "")
-  , [storageKey]);
+  const initial = useMemo(
+    () => (typeof window !== "undefined" ? localStorage.getItem(storageKey) || "" : ""),
+    [storageKey]
+  );
   const [v, setV] = useState(initial);
   const [saved, setSaved] = useState(false);
   return (
     <div>
-      <textarea value={v} onChange={(e)=>{setV(e.target.value); setSaved(false);}} placeholder={placeholder} style={styles.textarea}/>
+      <textarea
+        value={v}
+        onChange={(e) => { setV(e.target.value); setSaved(false); }}
+        placeholder={placeholder}
+        style={styles.textarea}
+      />
       <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-        <button style={styles.primaryBtn} onClick={()=>{localStorage.setItem(storageKey, v); setSaved(true);}}>Enregistrer</button>
-        <button style={styles.secondaryBtn} onClick={()=>{const s = localStorage.getItem(storageKey)||""; setV(s); setSaved(false);}}>Recharger</button>
+        <button
+          style={styles.primaryBtn}
+          onClick={() => { localStorage.setItem(storageKey, v); setSaved(true); }}
+        >
+          Enregistrer
+        </button>
+        <button
+          style={styles.secondaryBtn}
+          onClick={() => { const s = localStorage.getItem(storageKey) || ""; setV(s); setSaved(false); }}
+        >
+          Recharger
+        </button>
       </div>
       {saved && <p style={styles.saved}>Enregistré ✓</p>}
     </div>
@@ -292,7 +340,6 @@ const styles = {
     pointerEvents: "none",
     zIndex: 3,
   },
-  // IMPORTANT : pas de fontFamily ici (sinon ça écrase Misteri Caps appliquée par className)
   title: { fontSize: 28, margin: 0, textShadow: "0 1px 0 #000" },
   subtitle: { opacity: 0.95, margin: "6px 0 10px", maxWidth: 720 },
   hint: {
@@ -348,13 +395,13 @@ const styles = {
   miniDoorIcon: { display: "inline-block" },
   miniDoorPlate: {
     fontWeight: 700,
-    letterSpacing: .3,
+    letterSpacing: 0.3,
     padding: "6px 10px",
     borderRadius: 8,
     background: "rgba(255,255,255,.08)",
     border: "1px solid rgba(255,255,255,.2)",
   },
-  miniDoorCaption: { marginTop: 8, opacity: .95 },
+  miniDoorCaption: { marginTop: 8, opacity: 0.95 },
 
   /* Rooms & cards */
   roomSection: { position: "relative", minHeight: "100vh", padding: "32px 16px" },
@@ -371,6 +418,10 @@ const styles = {
   list: { margin: 0, paddingLeft: 18, lineHeight: 1.6 },
 
   textarea: { width: "100%", minHeight: 140, background: "rgba(0,0,0,.35)", color: "#fff", border: "1px solid rgba(255,255,255,.25)", borderRadius: 10, padding: 10 },
+
+  /* 🔧 AJOUTÉS pour éviter les erreurs au rendu des iframes */
+  iframeWrap: { position: "relative", width: "100%", overflow: "hidden", borderRadius: 12, border: "1px solid rgba(255,255,255,.25)" },
+  iframe: { display: "block", width: "100%", minHeight: 360, border: "none", background: "rgba(0,0,0,.25)" },
 
   primaryBtn: { background: "#fff", color: "#111827", border: "1px solid rgba(255,255,255,.2)", padding: "8px 12px", borderRadius: 10, cursor: "pointer", fontWeight: 600 },
   secondaryBtn: { background: "transparent", color: "#fff", border: "1px solid rgba(255,255,255,.35)", padding: "8px 12px", borderRadius: 10, cursor: "pointer" },
