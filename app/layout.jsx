@@ -1,5 +1,4 @@
 // app/layout.jsx
-import "./globals.css";
 import localFont from "next/font/local";
 
 const MisteriCaps = localFont({
@@ -18,6 +17,10 @@ export default function RootLayout({ children }) {
     <html lang="fr">
       <body className={MisteriCaps.variable} style={{ margin: 0, background: "#0b0f1a", color: "white" }}>
         {children}
+        {/* Global CSS inline (remplace globals.css) */}
+        <style jsx global>{`
+          h1 { font-family: var(--font-title), serif; }
+        `}</style>
       </body>
     </html>
   );
