@@ -17,7 +17,7 @@ export default function RootLayout({ children }) {
     <html lang="fr">
       <body className={MisteriCaps.variable} style={{ margin: 0, background: "#0b0f1a", color: "white" }}>
         {children}
-        {/* ✅ CSS global SANS styled-jsx (OK en Server Component) */}
+        {/* CSS global côté serveur (pas de styled-jsx ici) */}
         <style
           dangerouslySetInnerHTML={{
             __html: `
@@ -30,6 +30,4 @@ export default function RootLayout({ children }) {
       </body>
     </html>
   );
-}
-
 }
