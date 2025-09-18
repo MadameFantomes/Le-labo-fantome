@@ -1,6 +1,14 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import localFont from "next/font/local";
+
+// — Police titre : Misteri Caps —
+// Assure-toi d'avoir: app/fonts/MisteriCapsRegular.woff2
+const MisteriCaps = localFont({
+  src: [{ path: "./fonts/MisteriCapsRegular.woff2", weight: "400", style: "normal" }],
+  display: "swap",
+});
 
 const DOOR_CREAK_URL = "/door-creak.mp3";
 const HALL_CHIME_URL = "/hall-chimes.mp3";
@@ -76,7 +84,10 @@ function Landing({ onEnter }) {
 
       {/* Texte — devant */}
       <div style={styles.topTextLayer} aria-hidden>
-        <h1 style={styles.title}>Le Labo Fantôme École</h1>
+        {/* Police Misteri Caps appliquée ici */}
+        <h1 className={MisteriCaps.className} style={styles.title}>
+          Le Labo Fantôme École
+        </h1>
         <p style={styles.subtitle}>Une porte s&apos;entrouvre entre visible et invisible…</p>
         <p style={styles.hint}>Cliquer la porte pour entrer</p>
       </div>
@@ -127,6 +138,7 @@ const styles = {
     pointerEvents: "none",
     zIndex: 3,
   },
+  // pas de fontFamily ici pour laisser Misteri Caps s’appliquer
   title: { fontSize: 28, margin: 0, textShadow: "0 1px 0 #000" },
   subtitle: { opacity: 0.95, margin: "6px 0 10px", maxWidth: 720 },
   hint: {
