@@ -2,12 +2,50 @@
 
 import React, { useState, useMemo } from "react";
 
+// --- TEMP: on neutralise l'audio et l'iframe pour éliminer les causes d'erreur ---
+const USE_AUDIO = false;     // repasse à true quand tout marche
+const USE_IFRAME = false;    // repasse à true quand tout marche
 const DOOR_CREAK_URL = "/door-creak.mp3";
 const HALL_CHIME_URL = "/hall-chimes.mp3";
 const BACKGROUND_MUSIC_URL = "/bg-music.mp3";
 const BOORACLE_URL = "https://booracle.example.com"; // remplace quand prêt
 
+// ---------- Error Boundary (affiche l’erreur au lieu d’un écran blanc) ----------
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, info) {
+    console.error("UI Error:", error, info);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: 24, color: "#fff", background: "#111" }}>
+          <h1 style={{ marginTop: 0 }}>Une erreur est survenue</h1>
+          <p>{String(this.state.error?.message || this.state.error || "Erreur inconnue")}</p>
+          <p>Ouvre la console du navigateur (F12) pour plus de détails.</p>
+          <button onClick={() => location.reload()}>Recharger</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function Site() {
+  return (
+    <ErrorBoundary>
+      <AppInner />
+    </ErrorBoundary>
+  );
+}
+
+function AppInner() {
   const [entered, setEntered] = useState(false);
   const [room, setRoom] = useState(null); // "labo" | "etude" | "ghostbox" | null
   const [muted, setMuted] = useState(false);
@@ -17,22 +55,28 @@ export default function Site() {
   const [bgm, setBgm] = useState(null);
 
   React.useEffect(() => {
+    if (!USE_AUDIO) return;
     if (typeof window === "undefined") return;
-    const c = new Audio(DOOR_CREAK_URL);
-    const h = new Audio(HALL_CHIME_URL);
-    const b = new Audio(BACKGROUND_MUSIC_URL);
-    c.volume = 0.6;
-    h.volume = 0.25; h.loop = false;
-    b.volume = 0.18; b.loop = true;
-    h.addEventListener("ended", () => { if (!muted) b.play().catch(()=>{}); });
-    setCreak(c); setChime(h); setBgm(b);
-    return () => { try{h.pause()}catch{}; try{b.pause()}catch{}; };
+    try {
+      const c = new Audio(DOOR_CREAK_URL);
+      const h = new Audio(HALL_CHIME_URL);
+      const b = new Audio(BACKGROUND_MUSIC_URL);
+      c.volume = 0.6;
+      h.volume = 0.25; h.loop = false;
+      b.volume = 0.18; b.loop = true;
+      h.addEventListener("ended", () => { if (!muted) b.play().catch(()=>{}); });
+      setCreak(c); setChime(h); setBgm(b);
+      return () => { try{h.pause()}catch{}; try{b.pause()}catch{}; };
+    } catch (e) {
+      console.warn("Audio init error:", e);
+    }
   }, [muted]);
 
   const handleEnter = () => {
     setEntered(true);
-    if (!muted && creak) creak.play().catch(()=>{});
-    if (!muted && chime) chime.play().catch(()=>{});
+    if (!USE_AUDIO) return;
+    try { if (!muted && creak) creak.play().catch(()=>{}); } catch {}
+    try { if (!muted && chime) chime.play().catch(()=>{}); } catch {}
   };
 
   const toggleMute = () => {
@@ -58,7 +102,7 @@ export default function Site() {
   );
 }
 
-/* ==================== LANDING (porte centrée, descendue) ==================== */
+/* ==================== LANDING (accueil) ==================== */
 function Landing({ onEnter }) {
   const [opened, setOpened] = useState(false);
 
@@ -74,14 +118,15 @@ function Landing({ onEnter }) {
       <div style={{ ...styles.bg, backgroundImage: "url(/door-wall.jpg)" }} aria-hidden />
       <div style={styles.bgVeil} aria-hidden />
 
-      {/* Texte — devant, ne bloque pas les clics */}
+      {/* Texte — devant */}
       <div style={styles.topTextLayer} aria-hidden>
-        <h1 style={styles.title}>Le Labo Fantôme École</h1>
+        {/* H1 héritera de Misteri Caps via globals.css et layout.jsx */}
+        <h1 style={styles.title}>Le Labo Fantôme — École</h1>
         <p style={styles.subtitle}>Une porte s&apos;entrouvre entre visible et invisible…</p>
         <p style={styles.hint}>Cliquer la porte pour entrer</p>
       </div>
 
-      {/* PORTE — fixe, centrée ; wrapper pour descendre un peu la porte */}
+      {/* Porte centrée */}
       <div style={styles.doorLayer}>
         <div style={{ transform: "translateY(5vh)" }}>
           <img
@@ -92,7 +137,7 @@ function Landing({ onEnter }) {
             role="button"
             tabIndex={0}
             style={{
-              width: "clamp(220px, 34vw, 400px)", // taille validée
+              width: "clamp(220px, 34vw, 400px)",
               height: "auto",
               transformOrigin: "left center",
               transition: "transform .9s cubic-bezier(.2,.7,.1,1)",
@@ -115,7 +160,7 @@ function Hall({ room, setRoom }) {
   if (room === "etude") return <RoomEtude onBack={() => setRoom(null)} />;
   if (room === "ghostbox") return <RoomGhostBox onBack={() => setRoom(null)} />;
 
-  const [hallSrc, setHallSrc] = React.useState("/hall.jpg");
+  const [hallSrc, setHallSrc] = useState("/hall.jpg");
 
   return (
     <section style={styles.hallScreen} aria-label="Hall — Choisir une pièce">
@@ -192,11 +237,19 @@ function RoomEtude({ onBack }) {
           <Card>
             <h3 style={styles.cardTitle}>Livret d&apos;étude</h3>
             <p style={styles.p}>Ton livret (PDF/flipbook) pourra être lié ici.</p>
-            <button style={styles.primaryBtn} onClick={() => alert("Ajoute l'URL du livret ici quand prêt.")}>Ouvrir le livret</button>
+            {USE_IFRAME ? (
+              <div style={styles.iframeWrap}>
+                <iframe title="Booracle" src={BOORACLE_URL} style={styles.iframe} />
+              </div>
+            ) : (
+              <button style={styles.primaryBtn} onClick={() => alert("Iframe désactivée temporairement pour debug.")}>
+                Activer l’iframe plus tard
+              </button>
+            )}
           </Card>
           <Card>
             <h3 style={styles.cardTitle}>Booracle en ligne</h3>
-            <div style={styles.iframeWrap}><iframe title="Booracle" src={BOORACLE_URL} style={styles.iframe} /></div>
+            <p style={styles.p}>Intégration à venir.</p>
           </Card>
         </div>
       </div>
@@ -236,17 +289,33 @@ function RoomHeader({ title, subtitle, onBack }) {
 function Card({ children }) { return <div style={styles.card}>{children}</div>; }
 
 function NotePad({ storageKey, placeholder }) {
-  const initial = useMemo(() =>
-    (typeof window !== "undefined" ? localStorage.getItem(storageKey) || "" : "")
-  , [storageKey]);
+  const initial = useMemo(
+    () => (typeof window !== "undefined" ? localStorage.getItem(storageKey) || "" : ""),
+    [storageKey]
+  );
   const [v, setV] = useState(initial);
   const [saved, setSaved] = useState(false);
   return (
     <div>
-      <textarea value={v} onChange={(e)=>{setV(e.target.value); setSaved(false);}} placeholder={placeholder} style={styles.textarea}/>
+      <textarea
+        value={v}
+        onChange={(e) => { setV(e.target.value); setSaved(false); }}
+        placeholder={placeholder}
+        style={styles.textarea}
+      />
       <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-        <button style={styles.primaryBtn} onClick={()=>{localStorage.setItem(storageKey, v); setSaved(true);}}>Enregistrer</button>
-        <button style={styles.secondaryBtn} onClick={()=>{const s = localStorage.getItem(storageKey)||""; setV(s); setSaved(false);}}>Recharger</button>
+        <button
+          style={styles.primaryBtn}
+          onClick={() => { localStorage.setItem(storageKey, v); setSaved(true); }}
+        >
+          Enregistrer
+        </button>
+        <button
+          style={styles.secondaryBtn}
+          onClick={() => { const s = localStorage.getItem(storageKey) || ""; setV(s); setSaved(false); }}
+        >
+          Recharger
+        </button>
       </div>
       {saved && <p style={styles.saved}>Enregistré ✓</p>}
     </div>
@@ -254,7 +323,6 @@ function NotePad({ storageKey, placeholder }) {
 }
 
 /* ======================= STYLES & HELPERS ======================= */
-
 function bg(url) {
   return {
     backgroundImage: `url(${url})`,
@@ -283,7 +351,7 @@ const styles = {
     pointerEvents: "none",
     zIndex: 3,
   },
-  title: { fontFamily: "serif", fontSize: 28, margin: 0, textShadow: "0 1px 0 #000" },
+  title: { fontSize: 28, margin: 0, textShadow: "0 1px 0 #000" },
   subtitle: { opacity: 0.95, margin: "6px 0 10px", maxWidth: 720 },
   hint: {
     display: "inline-block",
@@ -319,6 +387,14 @@ const styles = {
   hallSub: { opacity: 0.9 },
   doorsGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 20, marginTop: 24 },
 
+  /* Mini portes */
+  miniDoorBtn: { background: "transparent", border: "none", color: "#fff", cursor: "pointer", textAlign: "center" },
+  miniDoorBody: { border: "1px solid rgba(255,255,255,.25)", background: "rgba(0,0,0,.35)", borderRadius: 14, padding: 12, boxShadow: "0 10px 30px rgba(0,0,0,.35)" },
+  miniDoorTop: { fontSize: 28, marginBottom: 8 },
+  miniDoorIcon: { display: "inline-block" },
+  miniDoorPlate: { fontWeight: 700, letterSpacing: .3, padding: "6px 10px", borderRadius: 8, background: "rgba(255,255,255,.08)", border: "1px solid rgba(255,255,255,.2)" },
+  miniDoorCaption: { marginTop: 8, opacity: .95 },
+
   /* Rooms & cards */
   roomSection: { position: "relative", minHeight: "100vh", padding: "32px 16px" },
   room: { marginTop: 16, maxWidth: 1200, marginLeft: "auto", marginRight: "auto" },
@@ -332,7 +408,13 @@ const styles = {
   cardTitle: { fontFamily: "serif", fontSize: 18, margin: "0 0 8px" },
   p: { opacity: 0.95, lineHeight: 1.6 },
   list: { margin: 0, paddingLeft: 18, lineHeight: 1.6 },
+
   textarea: { width: "100%", minHeight: 140, background: "rgba(0,0,0,.35)", color: "#fff", border: "1px solid rgba(255,255,255,.25)", borderRadius: 10, padding: 10 },
+
+  /* Pour l'iframe quand tu la réactiveras */
+  iframeWrap: { position: "relative", width: "100%", overflow: "hidden", borderRadius: 12, border: "1px solid rgba(255,255,255,.25)" },
+  iframe: { display: "block", width: "100%", minHeight: 360, border: "none", background: "rgba(0,0,0,.25)" },
+
   primaryBtn: { background: "#fff", color: "#111827", border: "1px solid rgba(255,255,255,.2)", padding: "8px 12px", borderRadius: 10, cursor: "pointer", fontWeight: 600 },
   secondaryBtn: { background: "transparent", color: "#fff", border: "1px solid rgba(255,255,255,.35)", padding: "8px 12px", borderRadius: 10, cursor: "pointer" },
   saved: { fontSize: 12, color: "#86efac", marginTop: 6 },
