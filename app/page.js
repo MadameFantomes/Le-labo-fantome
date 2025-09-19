@@ -115,7 +115,7 @@ function Landing({ onEnter }) {
   };
 
   return (
-    <section aria-label="Accueil — Porte du Labo" style={styles.screen}>
+    <section aria-label="Accueil Porte du Labo" style={styles.screen}>
       {/* Fond mur en pierre */}
       <div style={{ ...styles.bg, backgroundImage: "url(/door-wall.jpg)" }} aria-hidden />
       <div style={styles.bgVeil} aria-hidden />
@@ -147,7 +147,7 @@ function Landing({ onEnter }) {
 
           {/* Texte SOUS la porte */}
           <div style={styles.underDoorText} aria-hidden>
-            <h1 style={styles.titleBig}>Le Labo Fantôme — École</h1>
+            <h1 style={styles.titleBig}>Le Labo Fantôme École</h1>
             <p style={styles.subtitle}>
               Une porte s&apos;entrouvre entre visible et invisible…
             </p>
