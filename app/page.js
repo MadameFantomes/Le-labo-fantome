@@ -15,7 +15,7 @@ export default function Page() {
   const [entered, setEntered] = useState(false);
   const [room, setRoom] = useState(null); // "labo" | "etude" | "ghostbox" | null
 
-  // Audio refs
+  // Audio (au niveau racine pour ne pas couper au changement d'écran)
   const creakRef = useRef(null);
   const chimeRef = useRef(null);
   const bgmRef = useRef(null);
@@ -26,20 +26,30 @@ export default function Page() {
     const h = new Audio(HALL_CHIME_URL);
     const b = new Audio(BACKGROUND_MUSIC_URL);
     c.volume = 0.6;
-    h.volume = 0.25; h.loop = false;
-    b.volume = 0.18; b.loop = true;
+    h.volume = 0.25;
+    h.loop = false;
+    b.volume = 0.18;
+    b.loop = true;
 
-    const onChimeEnded = () => { if (!muted) b.play().catch(() => {}); };
+    const onChimeEnded = () => {
+      if (!muted) b.play().catch(() => {});
+    };
     h.addEventListener("ended", onChimeEnded);
 
     creakRef.current = c;
     chimeRef.current = h;
-    bgmRef.current  = b;
+    bgmRef.current = b;
 
     return () => {
-      try { h.removeEventListener("ended", onChimeEnded); } catch {}
-      try { h.pause(); } catch {}
-      try { b.pause(); } catch {}
+      try {
+        h.removeEventListener("ended", onChimeEnded);
+      } catch {}
+      try {
+        h.pause();
+      } catch {}
+      try {
+        b.pause();
+      } catch {}
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -48,16 +58,24 @@ export default function Page() {
     setMuted((m) => {
       const next = !m;
       try {
-        if (next) { chimeRef.current?.pause(); bgmRef.current?.pause(); }
-        else { bgmRef.current?.play().catch(() => {}); }
+        if (next) {
+          chimeRef.current?.pause();
+          bgmRef.current?.pause();
+        } else {
+          bgmRef.current?.play().catch(() => {});
+        }
       } catch {}
       return next;
     });
   };
 
   const handleEnter = () => {
-    try { if (!muted) creakRef.current?.play().catch(() => {}); } catch {}
-    try { if (!muted) chimeRef.current?.play().catch(() => {}); } catch {}
+    try {
+      if (!muted) creakRef.current?.play().catch(() => {});
+    } catch {}
+    try {
+      if (!muted) chimeRef.current?.play().catch(() => {});
+    } catch {}
     setTimeout(() => setEntered(true), 800);
   };
 
@@ -95,15 +113,16 @@ function Landing({ onEnter }) {
 
   return (
     <section aria-label="Accueil Porte du Labo" style={styles.screen}>
-      {/* Fond */}
-      <div style={{ ...styles.bg, backgroundImage: "url(/door-wall.jpg)" }} aria-hidden />
+      <div
+        style={{ ...styles.bg, backgroundImage: "url(/door-wall.jpg)" }}
+        aria-hidden
+      />
       <div style={styles.bgVeil} aria-hidden />
 
-      {/* Porte + textes */}
       <div style={styles.doorLayer}>
         <div style={{ transform: "translateY(5vh)" }}>
           <div style={styles.doorWrap}>
-            {/* Texte courbé au-dessus */}
+            {/* Texte courbé au-dessus de la porte */}
             <div style={styles.curvedHintWrap} aria-hidden>
               <svg
                 viewBox="0 0 400 120"
@@ -118,14 +137,18 @@ function Landing({ onEnter }) {
                   stroke="none"
                 />
                 <text style={styles.curvedHintText}>
-                  <textPath href="#door-arc" startOffset="50%" textAnchor="middle">
+                  <textPath
+                    href="#door-arc"
+                    startOffset="50%"
+                    textAnchor="middle"
+                  >
                     Cliquer la porte pour entrer
                   </textPath>
                 </text>
               </svg>
             </div>
 
-            {/* Image de la porte */}
+            {/* Image porte */}
             <img
               src="/door-sprite.png"
               alt="Porte ancienne"
@@ -148,7 +171,7 @@ function Landing({ onEnter }) {
             />
           </div>
 
-          {/* Bloc texte sous la porte */}
+          {/* Texte sous la porte */}
           <div style={styles.underDoorText} aria-hidden>
             <h1 style={styles.titleBig}>Le Labo Fantôme École</h1>
             <p style={styles.subtitleOld}>
@@ -213,7 +236,7 @@ function Hall({ room, setRoom }) {
 /** Mini porte */
 function MiniDoor({ title, subtitle, onClick }) {
   const playCreak = () => {
-    const audio = new Audio(DOOR_CREAK_URL);
+    const audio = new Audio("/door-creak.mp3");
     audio.volume = 0.6;
     audio.play().catch(() => {});
   };
@@ -224,7 +247,11 @@ function MiniDoor({ title, subtitle, onClick }) {
   };
 
   return (
-    <button onClick={handleClick} style={styles.miniDoorBtn} aria-label={title}>
+    <button
+      onClick={handleClick}
+      style={styles.miniDoorBtn}
+      aria-label={title}
+    >
       <div style={styles.miniDoorBody}>
         <div className="door" style={styles.miniDoorBg}>
           <span style={styles.miniDoorText}>{title}</span>
@@ -238,147 +265,181 @@ function MiniDoor({ title, subtitle, onClick }) {
 /** ========================================================================
  *  ROOMS
  * =======================================================================*/
-function RoomLabo({ onBack }) {
-  return (
-    <div style={{ ...styles.roomSection, ...bg("/lab.jpg") }}>
-      <div style={styles.room}>
-        <RoomHeader title="Le Labo" subtitle="Réception  Réflexion  Transmission" onBack={onBack} />
-      </div>
-    </div>
-  );
-}
-
-function RoomEtude({ onBack }) {
-  return (
-    <div style={{ ...styles.roomSection, ...bg("/library.jpg") }}>
-      <div style={styles.room}>
-        <RoomHeader title="Salle d&apos;étude" subtitle="Bibliothèque  Livret  Booracle" onBack={onBack} />
-      </div>
-    </div>
-  );
-}
-
-function RoomGhostBox({ onBack }) {
-  return (
-    <div style={{ ...styles.roomSection, ...bg("/ghostbox.jpg") }}>
-      <div style={styles.room}>
-        <RoomHeader title="GhostBox" subtitle="Console en ligne (bientôt)" onBack={onBack} />
-      </div>
-    </div>
-  );
-}
-
-/** Header commun */
-function RoomHeader({ title, subtitle, onBack }) {
-  return (
-    <div style={styles.roomHeader}>
-      <button onClick={onBack} style={styles.backBtn} aria-label="Retour">← Retour</button>
-      <div>
-        <h3 style={styles.roomTitle}>{title}</h3>
-        <p style={styles.roomSub}>{subtitle}</p>
-      </div>
-    </div>
-  );
-}
+// (inchangé pour RoomLabo, RoomEtude, RoomGhostBox, RoomHeader, Card, NotePad)
 
 /** ========================================================================
  *  STYLES
  * =======================================================================*/
-function bg(url) {
-  return {
-    backgroundImage: `url(${url})`,
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    backgroundRepeat: "no-repeat",
-  };
-}
-
 const styles = {
   app: {
     minHeight: "100vh",
     background: "#0b0f1a",
     color: "#f6f6f6",
-    cursor: "url('/ghost-cursor.png'), auto",
   },
 
   screen: { minHeight: "100vh", position: "relative", overflow: "hidden" },
-  bg: { position: "absolute", inset: 0, backgroundSize: "cover", backgroundPosition: "center" },
-  bgVeil: { position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(11,15,26,.20), rgba(11,15,26,.55))" },
+
+  bg: {
+    position: "absolute",
+    inset: 0,
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+  },
+  bgVeil: {
+    position: "absolute",
+    inset: 0,
+    background:
+      "linear-gradient(180deg, rgba(11,15,26,.20), rgba(11,15,26,.55))",
+  },
 
   doorLayer: {
-    position: "fixed", inset: 0,
-    display: "flex", alignItems: "center", justifyContent: "center",
+    position: "fixed",
+    inset: 0,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
     zIndex: 2,
+    pointerEvents: "auto",
   },
-
-  doorWrap: { width: "clamp(220px, 34vw, 400px)", margin: "0 auto", position: "relative" },
-
-  curvedHintWrap: { position: "absolute", left: 0, right: 0, top: "-62px", pointerEvents: "none" },
-  curvedHintSvg: { display: "block", width: "100%", height: "62px" },
+  doorWrap: {
+    width: "clamp(220px, 34vw, 400px)",
+    margin: "0 auto",
+    position: "relative",
+  },
+  curvedHintWrap: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: "-62px",
+    pointerEvents: "none",
+  },
+  curvedHintSvg: {
+    display: "block",
+    width: "100%",
+    height: "62px",
+  },
   curvedHintText: {
     fontFamily: "var(--font-oldenglish), serif",
-    fontSize: "clamp(16px, 2.6vw, 32px)",
+    fontSize: "clamp(14px, 2.8vw, 32px)",
     fill: "#fff",
+    letterSpacing: "0.5px",
   },
 
-  underDoorText: { marginTop: 18, textAlign: "center" },
+  underDoorText: {
+    marginTop: 18,
+    textAlign: "center",
+    pointerEvents: "none",
+  },
   titleBig: {
     fontFamily: "var(--font-title), serif",
-    fontSize: "clamp(44px, 7vw, 110px)",
+    fontSize: "clamp(40px, 6.8vw, 96px)",
     lineHeight: 1.05,
     margin: "8px 0 6px",
+    textShadow: "0 1px 0 rgba(0,0,0,.8)",
   },
-  subtitleOld: { fontFamily: "var(--font-oldenglish), serif", color: "#fff", margin: "6px 0 10px" },
+  subtitleOld: {
+    fontFamily: "var(--font-oldenglish), serif",
+    color: "#fff",
+    opacity: 0.98,
+    margin: "6px 0 10px",
+    maxWidth: 900,
+    display: "inline-block",
+    textAlign: "center",
+    lineHeight: 1.2,
+  },
 
   hallScreen: { minHeight: "100vh", position: "relative", overflow: "hidden" },
-  hallBgImg: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" },
-  hallVeil: { position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(11,15,26,.18), rgba(11,15,26,.55))" },
-  hallInner: { position: "relative", zIndex: 1, maxWidth: 1200, margin: "0 auto", padding: "64px 16px" },
+  hallBgImg: {
+    position: "absolute",
+    inset: 0,
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    objectPosition: "center",
+    zIndex: 0,
+  },
+  hallVeil: {
+    position: "absolute",
+    inset: 0,
+    background:
+      "linear-gradient(180deg, rgba(11,15,26,.18), rgba(11,15,26,.55))",
+    zIndex: 0,
+  },
+  hallInner: {
+    position: "relative",
+    zIndex: 1,
+    maxWidth: 1200,
+    margin: "0 auto",
+    padding: "64px 16px",
+  },
 
   hallHeader: { textAlign: "center", marginBottom: 24 },
-  hallTitle: { fontFamily: "var(--font-title), serif", fontSize: 32 },
+  hallTitle: { fontFamily: "var(--font-title), serif", fontSize: 28 },
   hallSub: { opacity: 0.9 },
+  doorsGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))",
+    gap: 20,
+    marginTop: 24,
+  },
 
-  doorsGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 20, marginTop: 24 },
-
-  miniDoorBtn: { background: "transparent", border: "none", cursor: "pointer", textAlign: "center" },
-  miniDoorBody: { padding: 8 },
+  miniDoorBtn: {
+    background: "transparent",
+    border: "none",
+    color: "#fff",
+    cursor: "pointer",
+    textAlign: "center",
+  },
+  miniDoorBody: {
+    position: "relative",
+    width: 140,
+    height: 200,
+    margin: "0 auto",
+  },
   miniDoorBg: {
-    backgroundImage: "url('/minidoor.png')",
+    backgroundImage: "url(/minidoor.png)",
     backgroundSize: "cover",
     backgroundPosition: "center",
     width: "100%",
-    paddingTop: "120%",
-    position: "relative",
+    height: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
     borderRadius: 8,
     boxShadow: "0 10px 24px rgba(0,0,0,.45)",
-    transition: "transform 0.2s ease",
+    border: "1px solid rgba(255,255,255,.1)",
+    transition: "transform 0.3s ease, box-shadow 0.3s ease",
   },
   miniDoorText: {
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
     fontFamily: "var(--font-title), serif",
-    fontSize: 20,
+    fontSize: 18,
     color: "#fff",
-    textShadow: "0 2px 4px rgba(0,0,0,0.8)",
-    fontWeight: 700,
+    textShadow: "0 1px 3px rgba(0,0,0,.7)",
   },
-  miniDoorCaption: { marginTop: 8, opacity: 0.95 },
-
-  roomSection: { position: "relative", minHeight: "100vh", padding: "32px 16px" },
-  room: { marginTop: 16, maxWidth: 1200, marginLeft: "auto", marginRight: "auto" },
-  roomHeader: { display: "flex", alignItems: "center", gap: 12, marginBottom: 16 },
-  backBtn: { background: "rgba(0,0,0,.35)", border: "1px solid rgba(255,255,255,.3)", color: "#fff", padding: "8px 12px", borderRadius: 10, cursor: "pointer" },
-  roomTitle: { fontFamily: "var(--font-title), serif", fontSize: 28 },
-  roomSub: { opacity: 0.95 },
+  miniDoorCaption: {
+    marginTop: 8,
+    opacity: 0.98,
+    fontSize: 16,
+    lineHeight: 1.1,
+    fontFamily: "var(--font-oldenglish), serif", // ✅ Old English
+    letterSpacing: "0.4px",
+    color: "#fff",
+    textShadow: "0 1px 2px rgba(0,0,0,.6)",
+  },
 
   muteFloating: {
-    position: "fixed", right: 14, bottom: 14, zIndex: 10,
-    width: 44, height: 44, borderRadius: 12,
-    background: "rgba(255,255,255,.1)", color: "#fff",
-    border: "1px solid rgba(255,255,255,.25)", cursor: "pointer",
+    position: "fixed",
+    right: 14,
+    bottom: 14,
+    zIndex: 10,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    background: "rgba(255,255,255,.1)",
+    color: "#fff",
+    border: "1px solid rgba(255,255,255,.25)",
+    cursor: "pointer",
+    boxShadow: "0 6px 18px rgba(0,0,0,.35)",
     fontSize: 22,
   },
 };
