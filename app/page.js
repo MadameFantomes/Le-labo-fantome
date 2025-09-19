@@ -85,7 +85,7 @@ export default function Page() {
  *  ACCUEIL (Landing)
  *  - Titre SOUS la porte, très grand
  *  - Sous-titre en Old English (blanc)
- *  - Texte "Cliquer la porte..." courbé au-dessus de la porte (Old English, sans fond)
+ *  - Texte "Cliquer sur la porte..." courbé au-dessus de la porte (Old English, sans fond)
  * =======================================================================*/
 function Landing({ onEnter }) {
   const [opened, setOpened] = useState(false);
@@ -97,7 +97,7 @@ function Landing({ onEnter }) {
   };
 
   return (
-    <section aria-label="Accueil — Porte du Labo" style={styles.screen}>
+    <section aria-label="Accueil Porte du Labo" style={styles.screen}>
       {/* Fond */}
       <div style={{ ...styles.bg, backgroundImage: "url(/door-wall.jpg)" }} aria-hidden />
       <div style={styles.bgVeil} aria-hidden />
@@ -107,29 +107,30 @@ function Landing({ onEnter }) {
         <div style={{ transform: "translateY(5vh)" }}>
           {/* Conteneur qui synchronise la largeur de l'image et du texte courbé */}
           <div style={styles.doorWrap}>
-            {/* Texte courbé au-dessus de la porte */}
-            <div style={styles.curvedHintWrap} aria-hidden>
-              {/* SVG responsive, texte sur chemin */}
-              <svg
-                viewBox="0 0 400 120"
-                style={styles.curvedHintSvg}
-                preserveAspectRatio="none"
-                aria-hidden
-              >
-                {/* Arc (path) */}
-                <path
-                  id="door-arc"
-                  d="M 10 100 Q 200 10 390 100"
-                  fill="none"
-                  stroke="none"
-                />
-                <text style={styles.curvedHintText}>
-                  <textPath href="#door-arc" startOffset="50%" textAnchor="middle">
-                    Cliquer la porte pour entrer
-                  </textPath>
-                </text>
-              </svg>
-            </div>
+          {/* Texte courbé au-dessus de la porte */}
+<div style={styles.curvedHintWrap} aria-hidden>
+  {/* SVG responsive, texte sur chemin */}
+  <svg
+    viewBox="0 0 400 120"
+    style={styles.curvedHintSvg}
+    preserveAspectRatio="none"
+    aria-hidden
+  >
+    {/* Arc (path) */}
+    <path
+      id="door-arc"
+      d="M 10 100 Q 200 10 390 100"
+      fill="none"
+      stroke="none"
+    />
+    <text style={styles.curvedHintText}>
+      <textPath href="#door-arc" startOffset="50%" textAnchor="middle">
+        Cliquer la porte pour entrer
+      </textPath>
+    </text>
+  </svg>
+</div>
+
 
             {/* Image de la porte */}
             <img
