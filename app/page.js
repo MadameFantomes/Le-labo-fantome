@@ -15,7 +15,7 @@ export default function Page() {
   const [entered, setEntered] = useState(false);
   const [room, setRoom] = useState(null); // "labo" | "etude" | "ghostbox" | null
 
-  // Audio (au niveau racine pour ne pas couper au changement d'écran)
+  // Audio
   const creakRef = useRef(null);
   const chimeRef = useRef(null);
   const bgmRef = useRef(null);
@@ -83,9 +83,6 @@ export default function Page() {
 
 /** ========================================================================
  *  ACCUEIL (Landing)
- *  - Titre SOUS la porte, très grand
- *  - Sous-titre en Old English (blanc)
- *  - Texte "Cliquer sur la porte..." courbé au-dessus de la porte (Old English, sans fond)
  * =======================================================================*/
 function Landing({ onEnter }) {
   const [opened, setOpened] = useState(false);
@@ -105,32 +102,28 @@ function Landing({ onEnter }) {
       {/* Porte + textes */}
       <div style={styles.doorLayer}>
         <div style={{ transform: "translateY(5vh)" }}>
-          {/* Conteneur qui synchronise la largeur de l'image et du texte courbé */}
           <div style={styles.doorWrap}>
-          {/* Texte courbé au-dessus de la porte */}
-<div style={styles.curvedHintWrap} aria-hidden>
-  {/* SVG responsive, texte sur chemin */}
-  <svg
-    viewBox="0 0 400 120"
-    style={styles.curvedHintSvg}
-    preserveAspectRatio="none"
-    aria-hidden
-  >
-    {/* Arc (path) */}
-    <path
-      id="door-arc"
-      d="M 10 100 Q 200 10 390 100"
-      fill="none"
-      stroke="none"
-    />
-    <text style={styles.curvedHintText}>
-      <textPath href="#door-arc" startOffset="50%" textAnchor="middle">
-        Cliquer la porte pour entrer
-      </textPath>
-    </text>
-  </svg>
-</div>
-
+            {/* Texte courbé au-dessus de la porte */}
+            <div style={styles.curvedHintWrap} aria-hidden>
+              <svg
+                viewBox="0 0 400 120"
+                style={styles.curvedHintSvg}
+                preserveAspectRatio="none"
+                aria-hidden
+              >
+                <path
+                  id="door-arc"
+                  d="M 10 100 Q 200 10 390 100"
+                  fill="none"
+                  stroke="none"
+                />
+                <text style={styles.curvedHintText}>
+                  <textPath href="#door-arc" startOffset="50%" textAnchor="middle">
+                    Cliquer la porte pour entrer
+                  </textPath>
+                </text>
+              </svg>
+            </div>
 
             {/* Image de la porte */}
             <img
@@ -381,40 +374,36 @@ const styles = {
     zIndex: 2, pointerEvents: "auto",
   },
 
-  // Conteneur pour synchroniser largeur de l'image et du texte courbé
   doorWrap: {
     width: "clamp(220px, 34vw, 400px)",
     margin: "0 auto",
     position: "relative",
   },
 
-  // Texte courbé au-dessus : 100% de la largeur du conteneur
   curvedHintWrap: {
     position: "absolute",
     left: 0, right: 0,
-    top: "-62px", // ajuste si besoin pour l’écart au-dessus
-    pointerEvents: "none", // ne bloque pas le clic sur la porte
+    top: "-62px",
+    pointerEvents: "none",
   },
   curvedHintSvg: {
     display: "block",
     width: "100%",
-    height: "62px", // hauteur du bandeau (liée à top)
+    height: "62px",
   },
   curvedHintText: {
     fontFamily: "var(--font-oldenglish), serif",
-    fontSize: "clamp(12px, 2.2vw, 26px)",
+    fontSize: "clamp(18px, 3.6vw, 38px)", // plus gros
     fill: "#fff",
-    letterSpacing: "0.5px",
+    letterSpacing: "0.8px",
   },
 
-  // Bloc texte SOUS la porte
   underDoorText: {
     marginTop: 18,
     textAlign: "center",
     pointerEvents: "none",
   },
 
-  // Titre géant (toujours MisteriCaps via globals)
   titleBig: {
     fontFamily: "var(--font-title), serif",
     fontSize: "clamp(40px, 6.8vw, 96px)",
@@ -423,7 +412,6 @@ const styles = {
     textShadow: "0 1px 0 rgba(0,0,0,.8)",
   },
 
-  // Sous-titre en Old English (blanc)
   subtitleOld: {
     fontFamily: "var(--font-oldenglish), serif",
     color: "#fff",
@@ -450,8 +438,8 @@ const styles = {
   hallInner: { position: "relative", zIndex: 1, maxWidth: 1200, margin: "0 auto", padding: "64px 16px" },
 
   hallHeader: { textAlign: "center", marginBottom: 24 },
-  hallTitle: { fontFamily: "serif", fontSize: 28 },
-  hallSub: { opacity: 0.9 },
+  hallTitle: { fontFamily: "var(--font-title), serif", fontSize: 32, letterSpacing: 0.5 },
+  hallSub: { opacity: 0.9, fontFamily: "var(--font-title), serif", letterSpacing: 0.3 },
   doorsGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 20, marginTop: 24 },
 
   miniDoorBtn: { background: "transparent", border: "none", color: "#fff", cursor: "pointer", textAlign: "center" },
@@ -461,40 +449,3 @@ const styles = {
   miniDoorPlate: { fontWeight: 700, letterSpacing: 0.3, padding: "6px 10px", borderRadius: 8, background: "rgba(255,255,255,.08)", border: "1px solid rgba(255,255,255,.2)" },
   miniDoorCaption: { marginTop: 8, opacity: 0.95 },
 
-  /** Rooms & cards */
-  roomSection: { position: "relative", minHeight: "100vh", padding: "32px 16px" },
-  room: { marginTop: 16, maxWidth: 1200, marginLeft: "auto", marginRight: "auto" },
-  roomHeader: { display: "flex", alignItems: "center", gap: 12, marginBottom: 16 },
-  backBtn: { background: "rgba(0,0,0,.35)", border: "1px solid rgba(255,255,255,.3)", color: "#fff", padding: "8px 12px", borderRadius: 10, cursor: "pointer" },
-  roomTitle: { fontFamily: "serif", fontSize: 24 },
-  roomSub: { opacity: 0.95 },
-  roomContent: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 16 },
-
-  card: { border: "1px solid rgba(255,255,255,.25)", background: "rgba(0,0,0,.35)", borderRadius: 14, padding: 16, boxShadow: "0 10px 30px rgba(0,0,0,.35)" },
-  cardTitle: { fontFamily: "serif", fontSize: 18, margin: "0 0 8px" },
-  p: { opacity: 0.95, lineHeight: 1.6 },
-  list: { margin: 0, paddingLeft: 18, lineHeight: 1.6 },
-
-  textarea: { width: "100%", minHeight: 140, background: "rgba(0,0,0,.35)", color: "#fff", border: "1px solid rgba(255,255,255,.25)", borderRadius: 10, padding: 10 },
-
-  primaryBtn: { background: "#fff", color: "#111827", border: "1px solid rgba(255,255,255,.2)", padding: "8px 12px", borderRadius: 10, cursor: "pointer", fontWeight: 600 },
-  secondaryBtn: { background: "transparent", color: "#fff", border: "1px solid rgba(255,255,255,.35)", padding: "8px 12px", borderRadius: 10, cursor: "pointer" },
-  saved: { fontSize: 12, color: "#86efac", marginTop: 6 },
-
-  /** Bouton Mute */
-  muteFloating: {
-    position: "fixed",
-    right: 14,
-    bottom: 14,
-    zIndex: 10,
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    background: "rgba(255,255,255,.1)",
-    color: "#fff",
-    border: "1px solid rgba(255,255,255,.25)",
-    cursor: "pointer",
-    boxShadow: "0 6px 18px rgba(0,0,0,.35)",
-    fontSize: 22,
-  },
-};
