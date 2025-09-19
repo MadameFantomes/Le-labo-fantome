@@ -156,7 +156,7 @@ function Landing({ onEnter }) {
 
           {/* Bloc texte SOUS la porte */}
           <div style={styles.underDoorText} aria-hidden>
-            <h1 style={styles.titleBig}>Le Labo Fantôme — École</h1>
+            <h1 style={styles.titleBig}>Le Labo Fantôme École</h1>
             <p style={styles.subtitleOld}>
               Une porte s&apos;entrouvre entre visible et invisible…
             </p>
@@ -178,7 +178,7 @@ function Hall({ room, setRoom }) {
   const [hallSrc, setHallSrc] = useState("/hall.jpg");
 
   return (
-    <section style={styles.hallScreen} aria-label="Hall — Choisir une pièce">
+    <section style={styles.hallScreen} aria-label="Hall Choisir une pièce">
       <img
         src={hallSrc}
         alt=""
@@ -239,7 +239,7 @@ function RoomLabo({ onBack }) {
   return (
     <div style={{ ...styles.roomSection, ...bg("/lab.jpg") }}>
       <div style={styles.room}>
-        <RoomHeader title="Le Labo" subtitle="Réception — Réflexion — Transmission" onBack={onBack} />
+        <RoomHeader title="Le Labo" subtitle="Réception  Réflexion  Transmission" onBack={onBack} />
         <div style={styles.roomContent}>
           <Card>
             <h3 style={styles.cardTitle}>Protocole d&apos;enregistrement (démo)</h3>
@@ -265,7 +265,7 @@ function RoomEtude({ onBack }) {
   return (
     <div style={{ ...styles.roomSection, ...bg("/library.jpg") }}>
       <div style={styles.room}>
-        <RoomHeader title="Salle d&apos;étude" subtitle="Bibliothèque — Livret — Booracle" onBack={onBack} />
+        <RoomHeader title="Salle d&apos;étude" subtitle="Bibliothèque  Livret  Booracle" onBack={onBack} />
         <div style={styles.roomContent}>
           <Card>
             <h3 style={styles.cardTitle}>Livret d&apos;étude</h3>
