@@ -448,4 +448,3 @@ const styles = {
   miniDoorIcon: { display: "inline-block" },
   miniDoorPlate: { fontWeight: 700, letterSpacing: 0.3, padding: "6px 10px", borderRadius: 8, background: "rgba(255,255,255,.08)", border: "1px solid rgba(255,255,255,.2)" },
   miniDoorCaption: { marginTop: 8, opacity: 0.95 },
-
