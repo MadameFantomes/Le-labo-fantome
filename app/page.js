@@ -119,7 +119,7 @@ function Landing({ onEnter }) {
                 />
                 <text style={styles.curvedHintText}>
                   <textPath href="#door-arc" startOffset="50%" textAnchor="middle">
-                    Cliquer la porte pour entrer
+                    Cliquer sur la porte pour entrer
                   </textPath>
                 </text>
               </svg>
