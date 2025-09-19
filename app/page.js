@@ -40,15 +40,9 @@ export default function Page() {
     bgmRef.current = b;
 
     return () => {
-      try {
-        h.removeEventListener("ended", onChimeEnded);
-      } catch {}
-      try {
-        h.pause();
-      } catch {}
-      try {
-        b.pause();
-      } catch {}
+      try { h.removeEventListener("ended", onChimeEnded); } catch {}
+      try { h.pause(); } catch {}
+      try { b.pause(); } catch {}
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -69,12 +63,8 @@ export default function Page() {
   };
 
   const handleEnter = () => {
-    try {
-      if (!muted) creakRef.current?.play().catch(() => {});
-    } catch {}
-    try {
-      if (!muted) chimeRef.current?.play().catch(() => {});
-    } catch {}
+    try { if (!muted) creakRef.current?.play().catch(() => {}); } catch {}
+    try { if (!muted) chimeRef.current?.play().catch(() => {}); } catch {}
     setTimeout(() => setEntered(true), 800);
   };
 
@@ -120,37 +110,66 @@ function Landing({ onEnter }) {
       />
       <div style={styles.bgVeil} aria-hidden />
 
-      {/* Texte haut */}
-      <div style={styles.topTextLayer} aria-hidden>
-        <h1 style={styles.title}>Le Labo Fantôme École</h1>
-        <p style={styles.subtitle}>
-          Une porte s&apos;entrouvre entre visible et invisible…
-        </p>
-      </div>
-
-      {/* Porte */}
+      {/* Porte + textes */}
       <div style={styles.doorLayer}>
         <div style={{ transform: "translateY(5vh)" }}>
-          <img
-            src="/door-sprite.png"
-            alt="Porte ancienne"
-            onClick={open}
-            onKeyDown={(e) => e.key === "Enter" && open()}
-            role="button"
-            tabIndex={0}
-            style={{
-              width: "clamp(220px, 34vw, 400px)",
-              height: "auto",
-              transformOrigin: "left center",
-              transition: "transform .9s cubic-bezier(.2,.7,.1,1)",
-              transform: opened
-                ? "perspective(1100px) rotateY(-72deg)"
-                : "perspective(1100px) rotateY(0deg)",
-              cursor: "pointer",
-              filter: "drop-shadow(0 18px 40px rgba(0,0,0,.45))",
-            }}
-          />
-          <p style={styles.hint}>Cliquer la porte pour entrer</p>
+          <div style={styles.doorWrap}>
+            {/* Texte courbé au-dessus */}
+            <div style={styles.curvedHintWrap} aria-hidden>
+              <svg
+                viewBox="0 0 400 120"
+                style={styles.curvedHintSvg}
+                preserveAspectRatio="none"
+                aria-hidden
+              >
+                <path
+                  id="door-arc"
+                  d="M 10 100 Q 200 10 390 100"
+                  fill="none"
+                  stroke="none"
+                />
+                <text style={styles.curvedHintText}>
+                  <textPath
+                    href="#door-arc"
+                    startOffset="50%"
+                    textAnchor="middle"
+                  >
+                    Cliquer la porte pour entrer
+                  </textPath>
+                </text>
+              </svg>
+            </div>
+
+            {/* Image porte */}
+            <img
+              src="/door-sprite.png"
+              alt="Porte ancienne"
+              onClick={open}
+              onKeyDown={(e) => e.key === "Enter" && open()}
+              role="button"
+              tabIndex={0}
+              style={{
+                width: "100%",
+                height: "auto",
+                transformOrigin: "left center",
+                transition: "transform .9s cubic-bezier(.2,.7,.1,1)",
+                transform: opened
+                  ? "perspective(1100px) rotateY(-72deg)"
+                  : "perspective(1100px) rotateY(0deg)",
+                cursor: "pointer",
+                filter: "drop-shadow(0 18px 40px rgba(0,0,0,.45))",
+                display: "block",
+              }}
+            />
+          </div>
+
+          {/* Texte sous la porte */}
+          <div style={styles.underDoorText} aria-hidden>
+            <h1 style={styles.titleBig}>Le Labo Fantôme École</h1>
+            <p style={styles.subtitleOld}>
+              Une porte s&apos;entrouvre entre visible et invisible…
+            </p>
+          </div>
         </div>
       </div>
     </section>
@@ -212,7 +231,15 @@ function Hall({ room, setRoom }) {
 /** Mini porte */
 function MiniDoor({ title, subtitle, icon, onClick }) {
   return (
-    <button onClick={onClick} style={styles.miniDoorBtn} aria-label={title}>
+    <button
+      onClick={onClick}
+      style={styles.miniDoorBtn}
+      aria-label={title}
+      onMouseEnter={(e) =>
+        (e.currentTarget.style.filter = "brightness(1.2)")
+      }
+      onMouseLeave={(e) => (e.currentTarget.style.filter = "none")}
+    >
       <div style={styles.miniDoorBody}>
         <div style={styles.miniDoorTop}>{icon}</div>
         <div style={styles.miniDoorPlate}>{title}</div>
@@ -231,12 +258,12 @@ function RoomLabo({ onBack }) {
       <div style={styles.room}>
         <RoomHeader
           title="Le Labo"
-          subtitle="Réception — Réflexion — Transmission"
+          subtitle="Réception  Réflexion  Transmission"
           onBack={onBack}
         />
         <div style={styles.roomContent}>
           <Card>
-            <h3 style={styles.cardTitle}>Protocole d&apos;enregistrement</h3>
+            <h3 style={styles.cardTitle}>Protocole d&apos;enregistrement (démo)</h3>
             <ol style={styles.list}>
               <li>Préparer l&apos;espace : silence, intention, 10–15 min.</li>
               <li>Matériel : micro + casque ; noter la date/heure.</li>
@@ -264,7 +291,7 @@ function RoomEtude({ onBack }) {
       <div style={styles.room}>
         <RoomHeader
           title="Salle d&apos;étude"
-          subtitle="Bibliothèque — Livret — Booracle"
+          subtitle="Bibliothèque  Livret  Booracle"
           onBack={onBack}
         />
         <div style={styles.roomContent}>
@@ -283,11 +310,13 @@ function RoomEtude({ onBack }) {
           <Card>
             <h3 style={styles.cardTitle}>Booracle en ligne</h3>
             <p style={styles.p}>
-              Ton Booracle ou console pourra être intégré ici.
+              Intégration à venir (lien ou console embarquée).
             </p>
             <button
               style={styles.secondaryBtn}
-              onClick={() => alert("Prévoir l'URL du Booracle/console.")}
+              onClick={() =>
+                alert("Prévoir l'URL du Booracle/console.")
+              }
             >
               Préparer l&apos;intégration
             </button>
@@ -310,10 +339,14 @@ function RoomGhostBox({ onBack }) {
         <div style={styles.roomContent}>
           <Card>
             <h3 style={styles.cardTitle}>Intégration prochaine</h3>
-            <p style={styles.p}>On branchera ici ton flux de GhostBox.</p>
+            <p style={styles.p}>
+              On branchera l&apos;URL/flux de ta GhostBox ici.
+            </p>
             <button
               style={styles.secondaryBtn}
-              onClick={() => alert("Prévoir l'URL/flux de la GhostBox.")}
+              onClick={() =>
+                alert("Prévoir l'URL/flux de la GhostBox.")
+              }
             >
               Préparer l&apos;intégration
             </button>
@@ -324,7 +357,7 @@ function RoomGhostBox({ onBack }) {
   );
 }
 
-/** Header commun */
+/** Header commun des rooms */
 function RoomHeader({ title, subtitle, onBack }) {
   return (
     <div style={styles.roomHeader}>
@@ -339,17 +372,18 @@ function RoomHeader({ title, subtitle, onBack }) {
   );
 }
 
-/** Card */
+/** Card basique */
 function Card({ children }) {
   return <div style={styles.card}>{children}</div>;
 }
 
-/** Bloc NotePad */
+/** Bloc NotePad (localStorage) */
 function NotePad({ storageKey, placeholder }) {
   const initial = useMemo(
-    () => (typeof window !== "undefined"
-      ? localStorage.getItem(storageKey) || ""
-      : ""),
+    () =>
+      typeof window !== "undefined"
+        ? localStorage.getItem(storageKey) || ""
+        : "",
     [storageKey]
   );
   const [v, setV] = useState(initial);
@@ -408,7 +442,7 @@ const styles = {
     minHeight: "100vh",
     background: "#0b0f1a",
     color: "#f6f6f6",
-    cursor: 'url("/ghost-cursor.png") 16 16, auto', // 👻 curseur global
+    cursor: 'url("/ghost-cursor.png") 16 16, auto',
   },
 
   /** Landing */
@@ -425,40 +459,7 @@ const styles = {
     background:
       "linear-gradient(180deg, rgba(11,15,26,.20), rgba(11,15,26,.55))",
   },
-  topTextLayer: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    right: 0,
-    display: "grid",
-    placeItems: "center",
-    paddingTop: "6vh",
-    textAlign: "center",
-    pointerEvents: "none",
-    zIndex: 3,
-  },
-  title: {
-    fontFamily: "var(--font-title), serif",
-    fontSize: 48,
-    margin: 0,
-    textShadow: "0 1px 0 #000",
-  },
-  subtitle: {
-    opacity: 0.95,
-    margin: "6px 0 10px",
-    maxWidth: 720,
-    fontFamily: "serif",
-  },
-  hint: {
-    display: "inline-block",
-    fontSize: 16,
-    color: "#f7f7f7",
-    background: "rgba(0,0,0,.45)",
-    border: "1px solid rgba(255,255,255,.25)",
-    borderRadius: 10,
-    padding: "8px 12px",
-    textShadow: "0 1px 0 rgba(0,0,0,.5)",
-  },
+
   doorLayer: {
     position: "fixed",
     inset: 0,
@@ -467,6 +468,39 @@ const styles = {
     justifyContent: "center",
     zIndex: 2,
     pointerEvents: "auto",
+  },
+  doorWrap: {
+    width: "clamp(220px, 34vw, 400px)",
+    margin: "0 auto",
+    position: "relative",
+  },
+
+  curvedHintWrap: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: "-62px",
+    pointerEvents: "none",
+  },
+  curvedHintSvg: { display: "block", width: "100%", height: "62px" },
+  curvedHintText: {
+    fontFamily: "var(--font-oldenglish), serif",
+    fontSize: "clamp(16px, 2.5vw, 28px)",
+    fill: "#fff",
+  },
+
+  underDoorText: { marginTop: 18, textAlign: "center", pointerEvents: "none" },
+  titleBig: {
+    fontFamily: "var(--font-title), serif",
+    fontSize: "clamp(40px, 6.8vw, 96px)",
+    margin: "8px 0 6px",
+  },
+  subtitleOld: {
+    fontFamily: "var(--font-oldenglish), serif",
+    color: "#fff",
+    opacity: 0.98,
+    margin: "6px 0 10px",
+    textAlign: "center",
   },
 
   /** Hall */
@@ -494,6 +528,7 @@ const styles = {
     margin: "0 auto",
     padding: "64px 16px",
   },
+
   hallHeader: { textAlign: "center", marginBottom: 24 },
   hallTitle: { fontFamily: "var(--font-title), serif", fontSize: 32 },
   hallSub: { opacity: 0.9 },
@@ -511,10 +546,6 @@ const styles = {
     cursor: "pointer",
     textAlign: "center",
     transition: "transform 0.3s ease, filter 0.3s ease",
-  },
-  miniDoorBtnHover: {
-    transform: "scale(1.05)",
-    filter: "brightness(1.2)",
   },
   miniDoorBody: {
     border: "1px solid rgba(255,255,255,.25)",
@@ -539,11 +570,14 @@ const styles = {
     lineHeight: 1.2,
     fontFamily: "serif",
     color: "#fff",
-    textShadow: "0 1px 2px rgba(0,0,0,.6)",
   },
 
-  /** Rooms */
-  roomSection: { position: "relative", minHeight: "100vh", padding: "32px 16px" },
+  /** Rooms & cards */
+  roomSection: {
+    position: "relative",
+    minHeight: "100vh",
+    padding: "32px 16px",
+  },
   room: {
     marginTop: 16,
     maxWidth: 1200,
@@ -582,6 +616,7 @@ const styles = {
   cardTitle: { fontFamily: "serif", fontSize: 18, margin: "0 0 8px" },
   p: { opacity: 0.95, lineHeight: 1.6 },
   list: { margin: 0, paddingLeft: 18, lineHeight: 1.6 },
+
   textarea: {
     width: "100%",
     minHeight: 140,
@@ -611,6 +646,7 @@ const styles = {
   },
   saved: { fontSize: 12, color: "#86efac", marginTop: 6 },
 
+  /** Bouton Mute */
   muteFloating: {
     position: "fixed",
     right: 14,
