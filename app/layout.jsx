@@ -2,14 +2,12 @@
 import "./globals.css";
 import localFont from "next/font/local";
 
-// Titre (déjà en place)
 const MisteriCaps = localFont({
   src: [{ path: "./fonts/MisteriCapsRegular.woff2", weight: "400", style: "normal" }],
   variable: "--font-title",
   display: "swap",
 });
 
-// Nouvelle police pour les phrases Old English
 const OldEnglish = localFont({
   src: [{ path: "./fonts/Old_Englished_Boots.ttf", weight: "400", style: "normal" }],
   variable: "--font-oldenglish",
@@ -24,7 +22,8 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="fr">
-      <body className={`${MisteriCaps.variable} ${OldEnglish.variable}`}>
+      {/* IMPORTANT : on applique les variables de police au body */}
+      <body className={`${MisteriCaps.variable} ${OldEnglish.variable}`} style={{ margin: 0, background: "#0b0f1a", color: "white" }}>
         {children}
       </body>
     </html>
